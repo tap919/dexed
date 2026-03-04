@@ -49,6 +49,15 @@ class DexedAudioProcessorEditor  : public AudioProcessorEditor, public ComboBox:
     void resetSize();
 
     Component frameComponent;
+
+    // Futuristic reskin additions
+    WaveformVisualizer waveformVis;
+    std::unique_ptr<TextButton> chorusOffBtn;
+    std::unique_ptr<TextButton> chorusIBtn;
+    std::unique_ptr<TextButton> chorusIIBtn;
+
+    void updateChorusButtons();
+
 public:
     DexedAudioProcessor *processor;
     GlobalEditor global;
@@ -79,8 +88,11 @@ public:
 
     bool keyPressed(const KeyPress& key, Component* originatingComponent) override;
 
+    // Extra 52px for the waveform visualizer strip between operator rows
     static const int WINDOW_SIZE_X = 866;
-    static const int WINDOW_SIZE_Y = 674;
+    static const int WINDOW_SIZE_Y = 726;
+    static const int VIS_STRIP_Y   = 219;  // y-position of the visualizer strip
+    static const int VIS_STRIP_H   = 52;   // height of the visualizer strip
 };
 
 

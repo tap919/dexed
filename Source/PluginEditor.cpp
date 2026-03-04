@@ -49,7 +49,7 @@ DexedAudioProcessorEditor::DexedAudioProcessorEditor (DexedAudioProcessor* owner
     lookAndFeel->setDefaultLookAndFeel(lookAndFeel);
     background = lookAndFeel->background;
 
-    // OPERATORS
+    // OPERATORS - Row 1 (unchanged positions)
     frameComponent.addAndMakeVisible(&(operators[0]));
     operators[0].setBounds(2, 1, 287, 218);
     operators[0].bind(processor, 0);
@@ -62,16 +62,49 @@ DexedAudioProcessorEditor::DexedAudioProcessorEditor (DexedAudioProcessor* owner
     operators[2].setBounds(578, 1, 287, 218);
     operators[2].bind(processor, 2);
 
+    // Waveform visualizer strip (between the two operator rows)
+    frameComponent.addAndMakeVisible(&waveformVis);
+    waveformVis.setBounds(0, VIS_STRIP_Y, 700, VIS_STRIP_H);
+
+    // Juno-style chorus mode buttons (right side of visualizer strip)
+    chorusOffBtn.reset(new TextButton("CHORUS OFF"));
+    chorusOffBtn->setButtonText("OFF");
+    chorusOffBtn->onClick = [this] {
+        processor->fxChorusMode->publishValue(0.0f);
+        updateChorusButtons();
+    };
+    frameComponent.addAndMakeVisible(chorusOffBtn.get());
+    chorusOffBtn->setBounds(706, VIS_STRIP_Y + 4, 46, VIS_STRIP_H - 8);
+
+    chorusIBtn.reset(new TextButton("CHORUS I"));
+    chorusIBtn->setButtonText("CHR I");
+    chorusIBtn->onClick = [this] {
+        processor->fxChorusMode->publishValue(0.5f);
+        updateChorusButtons();
+    };
+    frameComponent.addAndMakeVisible(chorusIBtn.get());
+    chorusIBtn->setBounds(755, VIS_STRIP_Y + 4, 46, VIS_STRIP_H - 8);
+
+    chorusIIBtn.reset(new TextButton("CHORUS II"));
+    chorusIIBtn->setButtonText("CHR II");
+    chorusIIBtn->onClick = [this] {
+        processor->fxChorusMode->publishValue(1.0f);
+        updateChorusButtons();
+    };
+    frameComponent.addAndMakeVisible(chorusIIBtn.get());
+    chorusIIBtn->setBounds(804, VIS_STRIP_Y + 4, 58, VIS_STRIP_H - 8);
+
+    // OPERATORS - Row 2 (shifted down by VIS_STRIP_H)
     frameComponent.addAndMakeVisible(&(operators[3]));
-    operators[3].setBounds(2, 219, 287, 218);
+    operators[3].setBounds(2, VIS_STRIP_Y + VIS_STRIP_H, 287, 218);
     operators[3].bind(processor, 3);
 
     frameComponent.addAndMakeVisible(&(operators[4]));
-    operators[4].setBounds(290, 219, 287, 218);
+    operators[4].setBounds(290, VIS_STRIP_Y + VIS_STRIP_H, 287, 218);
     operators[4].bind(processor, 4);
 
     frameComponent.addAndMakeVisible(&(operators[5]));
-    operators[5].setBounds(578, 219, 287, 218);
+    operators[5].setBounds(578, VIS_STRIP_Y + VIS_STRIP_H, 287, 218);
     operators[5].bind(processor, 5);
 
     // add the midi keyboard component..
@@ -79,11 +112,11 @@ DexedAudioProcessorEditor::DexedAudioProcessorEditor (DexedAudioProcessor* owner
 
     // The DX7 is a badass on the bass, keep it that way
     midiKeyboard.setLowestVisibleKey(24);
-    midiKeyboard.setBounds(4, 581, getWidth() - 8, 90);
+    midiKeyboard.setBounds(4, VIS_STRIP_Y + VIS_STRIP_H + 218 + 144 + 4, getWidth() - 8, 90);
     midiKeyboard.setTitle("Keyboard keys");
 
     frameComponent.addAndMakeVisible(&global);
-    global.setBounds(2,436,864,144);
+    global.setBounds(2, VIS_STRIP_Y + VIS_STRIP_H + 218, 864, 144);
     global.bind(this);
 
     global.setMonoState(processor->isMonoMode());
@@ -100,6 +133,7 @@ DexedAudioProcessorEditor::DexedAudioProcessorEditor (DexedAudioProcessor* owner
     resetSize();
     addKeyListener(this);
     updateUI();
+    updateChorusButtons();
     startTimer(100);
 }
 
@@ -109,10 +143,40 @@ DexedAudioProcessorEditor::~DexedAudioProcessorEditor() {
     setLookAndFeel(nullptr);
 }
 
+void DexedAudioProcessorEditor::updateChorusButtons() {
+    float mode = processor->fxChorusMode->getValueHost();
+    // Highlight the active button with yellow, others default
+    auto highlight = Colour(0xFFFFBF00);
+    auto normal    = Colour(0xFF1E90FF);
+    chorusOffBtn->setColour(TextButton::buttonColourId, mode <= 0.25f ? highlight : normal);
+    chorusOffBtn->setColour(TextButton::textColourOffId, mode <= 0.25f ? Colours::black : Colours::white);
+    chorusIBtn->setColour(TextButton::buttonColourId,   (mode > 0.25f && mode <= 0.75f) ? highlight : normal);
+    chorusIBtn->setColour(TextButton::textColourOffId,  (mode > 0.25f && mode <= 0.75f) ? Colours::black : Colours::white);
+    chorusIIBtn->setColour(TextButton::buttonColourId,  mode > 0.75f ? highlight : normal);
+    chorusIIBtn->setColour(TextButton::textColourOffId, mode > 0.75f ? Colours::black : Colours::white);
+}
+
 //==============================================================================
 void DexedAudioProcessorEditor::paint (Graphics& g) {
     g.setColour(background);
     g.fillRoundedRectangle(0.0f, 0.0f, (float) getWidth(), (float) getHeight(), 0);
+
+    // The paint() here is on the outer (scaled) container.
+    // The waveformVis strip background is painted by the component itself.
+    // Draw a yellow accent label for the CHORUS section header.
+    float factor = processor->getZoomFactor();
+    float stripY  = VIS_STRIP_Y  * factor;
+    float stripH  = VIS_STRIP_H  * factor;
+
+    // Horizontal separator lines bordering the visualizer strip
+    g.setColour(Colour(0xFF1E90FF).withAlpha(0.35f));
+    g.drawHorizontalLine((int)stripY,        0.0f, (float)getWidth());
+    g.drawHorizontalLine((int)(stripY + stripH), 0.0f, (float)getWidth());
+
+    // "CHORUS" label above the buttons
+    g.setColour(Colour(0xFFFFBF00).withAlpha(0.8f));
+    g.setFont(Font(9.5f, Font::bold));
+    g.drawText("JUNO CHORUS", (int)(706 * factor), (int)stripY, (int)(160 * factor), 14, Justification::centred, false);
 }
 
 void DexedAudioProcessorEditor::cartShow() {
@@ -286,6 +350,13 @@ void DexedAudioProcessorEditor::timerCallback() {
     }
     global.updatePitchPos(processor->voiceStatus.pitchStep);
     global.updateVu(processor->vuSignal);
+
+    // Update waveform visualizer
+    waveformVis.updateFromRingBuffer(
+        processor->waveformCapture,
+        processor->waveformCapturePos.load(std::memory_order_acquire),
+        DexedAudioProcessor::WAVEFORM_CAPTURE_SIZE);
+    waveformVis.repaint();
 }
 
 void DexedAudioProcessorEditor::updateUI() {
@@ -298,6 +369,7 @@ void DexedAudioProcessorEditor::updateUI() {
     rebuildProgramCombobox();
     global.updateDisplay();
     cartManager.updateCartFilename();
+    updateChorusButtons();
 }
 
 void DexedAudioProcessorEditor::rebuildProgramCombobox() {

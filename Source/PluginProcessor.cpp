@@ -90,6 +90,8 @@ DexedAudioProcessor::DexedAudioProcessor()
     
     vuSignal = 0;
     monoMode = 0;
+    waveformCapturePos = 0;
+    memset(waveformCapture, 0, sizeof(waveformCapture));
 
     resolvAppDir();
     
@@ -292,7 +294,13 @@ void DexedAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
         processMidiMessage(midiMsg);
     }
 
-    fx.process(channelData, numSamples);
+    // Stereo-aware fx processing (includes Juno chorus when enabled)
+    if ( buffer.getNumChannels() > 1 ) {
+        float *rightData = buffer.getWritePointer(1);
+        fx.process(channelData, rightData, numSamples);
+    } else {
+        fx.process(channelData, channelData, numSamples);
+    }
 
     for(i=0; i<numSamples; i++) {
         float s = std::abs(channelData[i]);
@@ -304,10 +312,20 @@ void DexedAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
         else
             vuSignal = 0;
     }
-    
-    // DX7 is a mono synth, but copy it to the right channel is available
-    if ( buffer.getNumChannels() > 1 )
-        buffer.copyFrom(1, 0, channelData, numSamples, 1);
+
+    // Fill waveform capture ring buffer for visualizer using a local position
+    // to avoid per-sample atomic loads/stores in the realtime thread.
+    // WAVEFORM_CAPTURE_SIZE must be a power of 2 for the bitmask wrap to work.
+    static_assert((DexedAudioProcessor::WAVEFORM_CAPTURE_SIZE & (DexedAudioProcessor::WAVEFORM_CAPTURE_SIZE - 1)) == 0,
+                  "WAVEFORM_CAPTURE_SIZE must be a power of 2");
+    {
+        int pos = waveformCapturePos.load(std::memory_order_relaxed);
+        for (int j = 0; j < numSamples; j++) {
+            waveformCapture[pos] = channelData[j];
+            pos = (pos + 1) & (WAVEFORM_CAPTURE_SIZE - 1);
+        }
+        waveformCapturePos.store(pos, std::memory_order_release);
+    }
 }
 
 //==============================================================================

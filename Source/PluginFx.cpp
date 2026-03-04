@@ -23,7 +23,8 @@
  */
 
 #define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
+#include <cstring>
 #include "PluginFx.h"
 #include "PluginProcessor.h"
 
@@ -56,6 +57,7 @@ PluginFx::PluginFx() {
     uiCutoff = 1;
     uiReso = 0;
     uiGain = 1;
+    uiChorusMode = 0;
 }
 
 void PluginFx::init(int sr) {
@@ -85,6 +87,12 @@ void PluginFx::init(int sr) {
     dc_r = 1.0-(126.0/sr);
     dc_id = 0;
     dc_od = 0;
+
+    // Juno chorus state
+    chorusWritePos = 0;
+    chorusLfoPhase = 0.0f;
+    memset(chorusBufL, 0, sizeof(chorusBufL));
+    memset(chorusBufR, 0, sizeof(chorusBufR));
 }
 
 inline float PluginFx::NR24(float sample,float g,float lpc) {
@@ -100,84 +108,146 @@ inline float PluginFx::NR(float sample, float g) {
     return y;
 }
 
-void PluginFx::process(float *work, int sampleSize) {
+void PluginFx::process(float *left, float *right, int sampleSize) {
     // very basic DC filter
-    float t_fd = work[0];
-    work[0] = work[0] - dc_id + dc_r * dc_od;
+    float t_fd = left[0];
+    left[0] = left[0] - dc_id + dc_r * dc_od;
     dc_id = t_fd;
     for (int i=1; i<sampleSize; i++) {
-        t_fd = work[i];
-        work[i] = work[i] - dc_id + dc_r * work[i-1];
+        t_fd = left[i];
+        left[i] = left[i] - dc_id + dc_r * left[i-1];
         dc_id = t_fd;
         
     }
-    dc_od = work[sampleSize-1];
+    dc_od = left[sampleSize-1];
     
     if ( uiGain != 1 ) {
         for(int i=0; i < sampleSize; i++ )
-            work[i] *= uiGain;
+            left[i] *= uiGain;
     }
     
     // don't apply the LPF if the cutoff is to maximum
-    if ( uiCutoff == 1 )
-        return;
-    
-    if ( uiCutoff != pCutoff || uiReso != pReso ) {
-        rReso = (0.991-logsc(1-uiReso,0,0.991));
-        R24 = 3.5 * rReso;
-        
-        float cutoffNorm = logsc(uiCutoff,60,19000);
-        rCutoff = (float)tan(cutoffNorm * sampleRateInv * juce::MathConstants<float>::pi);
+    if ( uiCutoff != 1 ) {
+        if ( uiCutoff != pCutoff || uiReso != pReso ) {
+            rReso = (0.991-logsc(1-uiReso,0,0.991));
+            R24 = 3.5 * rReso;
             
-        pCutoff = uiCutoff;
-        pReso = uiReso;
-        
-        R = 1 - rReso;
-    }
-        
-    // THIS IS MY FAVORITE 4POLE OBXd filter
-        
-    // maybe smooth this value
-    float g = rCutoff;
-    float lpc = g / (1 + g);
-    
-    for(int i=0; i < sampleSize; i++ ) {
-        float s = work[i];
-        s = s - 0.45*tptlpupw(c,s,15,sampleRateInv);
-        s = tptpc(d,s,bright);
-        
-        float y0 = NR24(s,g,lpc);
-        
-        //first low pass in cascade
-        double v = (y0 - s1) * lpc;
-        double res = v + s1;
-        s1 = res + v;
-        
-        //damping
-        s1 =atan(s1*rcor24)*rcor24Inv;
-        float y1= res;
-        float y2 = tptpc(s2,y1,g);
-        float y3 = tptpc(s3,y2,g);
-        float y4 = tptpc(s4,y3,g);
-        float mc;
-    
-        switch(mmch) {
-            case 0:
-                mc = ((1 - mmt) * y4 + (mmt) * y3);
-                break;
-            case 1:
-                mc = ((1 - mmt) * y3 + (mmt) * y2);
-                break;
-            case 2:
-                mc = ((1 - mmt) * y2 + (mmt) * y1);
-                break;
-            case 3:
-                mc = y1;
-                break;
+            float cutoffNorm = logsc(uiCutoff,60,19000);
+            rCutoff = (float)tan(cutoffNorm * sampleRateInv * juce::MathConstants<float>::pi);
+                
+            pCutoff = uiCutoff;
+            pReso = uiReso;
+            
+            R = 1 - rReso;
         }
+            
+        // Moog-style 4-pole ladder filter (OBXd-based)
+        float g = rCutoff;
+        float lpc = g / (1 + g);
         
-        //half volume comp
-        work[i] = mc * (1 + R24 * 0.45);
+        for(int i=0; i < sampleSize; i++ ) {
+            float s = left[i];
+            s = s - 0.45*tptlpupw(c,s,15,sampleRateInv);
+            s = tptpc(d,s,bright);
+            
+            float y0 = NR24(s,g,lpc);
+            
+            //first low pass in cascade
+            double v = (y0 - s1) * lpc;
+            double res = v + s1;
+            s1 = res + v;
+            
+            //damping
+            s1 =atan(s1*rcor24)*rcor24Inv;
+            float y1= res;
+            float y2 = tptpc(s2,y1,g);
+            float y3 = tptpc(s3,y2,g);
+            float y4 = tptpc(s4,y3,g);
+            float mc;
+        
+            switch(mmch) {
+                case 0:
+                    mc = ((1 - mmt) * y4 + (mmt) * y3);
+                    break;
+                case 1:
+                    mc = ((1 - mmt) * y3 + (mmt) * y2);
+                    break;
+                case 2:
+                    mc = ((1 - mmt) * y2 + (mmt) * y1);
+                    break;
+                case 3:
+                    mc = y1;
+                    break;
+                default:
+                    mc = y4;
+                    break;
+            }
+            
+            //half volume comp
+            left[i] = mc * (1 + R24 * 0.45);
+        }
+    }
+
+    // Juno-style BBD chorus
+    int chorusMode = (uiChorusMode <= 0.25f) ? 0 : (uiChorusMode <= 0.75f) ? 1 : 2;
+    if (chorusMode == 0) {
+        // No chorus: copy mono to right (skip if same buffer)
+        if (right != left)
+            memcpy(right, left, (size_t)sampleSize * sizeof(float));
+    } else {
+        // Roland Juno chorus: modulated BBD delay
+        // Mode I: 0.513 Hz LFO, Mode II: 0.863 Hz LFO
+        const float lfoRates[2] = { 0.513f, 0.863f };
+        float lfoHz  = lfoRates[chorusMode - 1];
+        float lfoInc = lfoHz / sampleRate;
+
+        // Center delay ~7.7ms, depth ~3.7ms (matches Juno hardware)
+        float centerDelay = 0.0077f * sampleRate;
+        float depth       = 0.0037f * sampleRate;
+
+        // Helper: linearly interpolated read from circular buffer.
+        // CHORUS_DELAY_LEN must be a power of 2 for the mask to work.
+        auto readInterp = [](const float* buf, int writePos, float delaySamples) -> float {
+            // rp may be negative; the bitwise mask handles wrapping for power-of-2 sizes
+            int   ri = (int)floorf((float)writePos - delaySamples);
+            float fr = ((float)writePos - delaySamples) - (float)ri;
+            int   i0 = ri & (CHORUS_DELAY_LEN - 1);
+            int   i1 = (i0 + 1) & (CHORUS_DELAY_LEN - 1);
+            return buf[i0] * (1.0f - fr) + buf[i1] * fr;
+        };
+
+        for (int i = 0; i < sampleSize; i++) {
+            float input = left[i];
+
+            // Write current sample into both delay lines
+            chorusBufL[chorusWritePos] = input;
+            chorusBufR[chorusWritePos] = input;
+
+            // Triangle LFO: maps phase [0,1] to [-1,+1] triangle
+            float triL = (chorusLfoPhase < 0.5f)
+                         ? (4.0f * chorusLfoPhase - 1.0f)
+                         : (3.0f - 4.0f * chorusLfoPhase);
+            // R channel is 180° out of phase for stereo width
+            float phaseR = chorusLfoPhase + 0.5f;
+            if (phaseR >= 1.0f) phaseR -= 1.0f;
+            float triR = (phaseR < 0.5f)
+                         ? (4.0f * phaseR - 1.0f)
+                         : (3.0f - 4.0f * phaseR);
+
+            float delayL = centerDelay + depth * triL;
+            float delayR = centerDelay + depth * triR;
+
+            float wetL = readInterp(chorusBufL, chorusWritePos, delayL);
+            float wetR = readInterp(chorusBufR, chorusWritePos, delayR);
+
+            // 50/50 dry/wet mix
+            left[i]  = 0.5f * input + 0.5f * wetL;
+            right[i] = 0.5f * input + 0.5f * wetR;
+
+            chorusWritePos = (chorusWritePos + 1) & (CHORUS_DELAY_LEN - 1);
+            chorusLfoPhase += lfoInc;
+            if (chorusLfoPhase >= 1.0f) chorusLfoPhase -= 1.0f;
+        }
     }
 }
 

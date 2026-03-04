@@ -200,4 +200,80 @@ public:
     }
 };
 
+//==============================================================================
+/**
+ * Futuristic oscilloscope-style waveform visualizer.
+ * Displays a glowing blue waveform in the center of the UI.
+ * Call updateFromRingBuffer() from the editor's timer callback to update.
+ */
+class WaveformVisualizer : public Component {
+public:
+    static const int BUFFER_SIZE = 512;
+
+    WaveformVisualizer() {
+        memset(displaySamples, 0, sizeof(displaySamples));
+    }
+
+    /** Copy the most recent BUFFER_SIZE samples from a ring buffer.
+     *  @param ringBuf   The source ring buffer
+     *  @param writePos  The current write position in the ring buffer
+     *  @param ringSize  Total size of the ring buffer (must equal BUFFER_SIZE or be a multiple)
+     */
+    void updateFromRingBuffer(const float *ringBuf, int writePos, int ringSize) {
+        // ringSize is expected to equal BUFFER_SIZE (both 512),
+        // but may also be a multiple. Use modulo for general wrapping.
+        for (int i = 0; i < BUFFER_SIZE; i++) {
+            int idx = (writePos - BUFFER_SIZE + i + ringSize) % ringSize;
+            displaySamples[i] = ringBuf[idx];
+        }
+    }
+
+    void paint(Graphics &g) override {
+        const int w = getWidth();
+        const int h = getHeight();
+
+        // Dark navy background with subtle grid
+        g.fillAll(Colour(0xFF040C16));
+
+        // Horizontal center grid line
+        g.setColour(Colour(0xFF1E4080).withAlpha(0.4f));
+        g.drawHorizontalLine(h / 2, 0.0f, (float)w);
+
+        // Vertical grid lines
+        for (int x = 0; x < w; x += w / 8)
+            g.drawVerticalLine(x, 0.0f, (float)h);
+
+        // Section label
+        g.setColour(Colour(0xFF1E90FF).withAlpha(0.7f));
+        g.setFont(Font(10.0f, Font::bold));
+        g.drawText("WAVEFORM", 4, 2, 70, 12, Justification::left, false);
+
+        // Waveform path — drawn twice for glow effect
+        const float xScale  = (float)w / (float)(BUFFER_SIZE - 1);
+        const float yCenter = h * 0.5f;
+        const float yScale  = h * 0.42f;
+
+        Path wPath;
+        bool started = false;
+        for (int i = 0; i < BUFFER_SIZE; i++) {
+            float px = i * xScale;
+            float py = yCenter - displaySamples[i] * yScale;
+            py = jlimit(1.0f, (float)(h - 1), py);
+            if (!started) { wPath.startNewSubPath(px, py); started = true; }
+            else           wPath.lineTo(px, py);
+        }
+
+        // Outer glow (thicker, more transparent)
+        g.setColour(Colour(0xFF1E90FF).withAlpha(0.18f));
+        g.strokePath(wPath, PathStrokeType(3.5f));
+
+        // Inner bright line
+        g.setColour(Colour(0xFF5AB4FF));
+        g.strokePath(wPath, PathStrokeType(1.2f));
+    }
+
+private:
+    float displaySamples[BUFFER_SIZE];
+};
+
 #endif  // DXCOMPONENTS_H_INCLUDED
