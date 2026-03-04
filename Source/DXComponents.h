@@ -220,11 +220,10 @@ public:
      *  @param ringSize  Total size of the ring buffer (must equal BUFFER_SIZE or be a multiple)
      */
     void updateFromRingBuffer(const float *ringBuf, int writePos, int ringSize) {
-        // ringSize is expected to equal BUFFER_SIZE (both 512).
-        // Use bitwise mask for efficient power-of-2 wrapping.
-        const int mask = ringSize - 1;
+        // ringSize is expected to equal BUFFER_SIZE (both 512),
+        // but may also be a multiple. Use modulo for general wrapping.
         for (int i = 0; i < BUFFER_SIZE; i++) {
-            int idx = (writePos - BUFFER_SIZE + i + ringSize) & mask;
+            int idx = (writePos - BUFFER_SIZE + i + ringSize) % ringSize;
             displaySamples[i] = ringBuf[idx];
         }
     }
