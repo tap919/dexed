@@ -97,8 +97,8 @@ class DexedAudioProcessor  : public AudioProcessor, public AsyncUpdater, public 
     PluginFx fx;
 
     // Per-voice drift state (Ornstein-Uhlenbeck random walk)
-    float voiceDrift[16];     // current pitch offset in Q24 logfreq units
-    float voiceDriftVel[16];  // drift velocity
+    float voiceDrift[MAX_ACTIVE_NOTES];     // current pitch offset in Q24 logfreq units
+    float voiceDriftVel[MAX_ACTIVE_NOTES];  // drift velocity
 
     /**
      * This flag is used in the audio thread to know if the voice has changed
