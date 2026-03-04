@@ -354,7 +354,7 @@ void DexedAudioProcessorEditor::timerCallback() {
     // Update waveform visualizer
     waveformVis.updateFromRingBuffer(
         processor->waveformCapture,
-        processor->waveformCapturePos.load(std::memory_order_relaxed),
+        processor->waveformCapturePos.load(std::memory_order_acquire),
         DexedAudioProcessor::WAVEFORM_CAPTURE_SIZE);
     waveformVis.repaint();
 }
