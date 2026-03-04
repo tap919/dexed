@@ -378,18 +378,6 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
         }
     }
 
-    // ---- Apply EQ to right channel independently (after chorus has been applied) ----
-    if (eqActive && right != left) {
-        for (int i = 0; i < sampleSize; i++) {
-            float s = right[i];
-            s = eqR[0].process(s);
-            s = eqR[1].process(s);
-            s = eqR[2].process(s);
-            s = eqR[3].process(s);
-            right[i] = s;
-        }
-    }
-
     // ---- Saturation on both channels (after chorus widening, stereo only) ----
     if (uiSaturation > 0.f && right != left) {
         static const float kSatMaxDrive = 9.f;
