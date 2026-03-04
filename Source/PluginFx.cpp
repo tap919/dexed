@@ -171,9 +171,12 @@ void PluginFx::updateEqCoeffs() {
 
     float gains[4] = { uiEqLowGain, uiEqLowMidGain, uiEqHighMidGain, uiEqHighGain };
 
+    // Use an epsilon to avoid recalculating for tiny float jitter from host automation.
+    constexpr float eqGainEpsilon = 1e-4f;
+
     bool changed = false;
     for (int i = 0; i < 4; i++) {
-        if (gains[i] != pEqGain[i]) { changed = true; break; }
+        if (std::fabs(gains[i] - pEqGain[i]) > eqGainEpsilon) { changed = true; break; }
     }
     if (!changed) return;
 
