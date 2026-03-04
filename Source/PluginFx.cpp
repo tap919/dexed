@@ -292,7 +292,7 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
         // Scale factor: [0,1] maps to [1x, 10x] drive
         static const float kSatMaxDrive = 9.f;
         float drive = 1.f + uiSaturation * kSatMaxDrive;
-        float inv   = 1.f / tanhf(drive);          // normalise to keep 0dB at low input
+        float inv   = 1.f / tanhf(drive);          // normalise so that a full-scale (~1.0) input stays near unity
         for (int i = 0; i < sampleSize; i++) {
             left[i] = tanhf(left[i] * drive) * inv;
         }
