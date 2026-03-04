@@ -90,7 +90,7 @@ public:
 
     // Extra 52px for the waveform visualizer strip between operator rows
     static const int WINDOW_SIZE_X = 866;
-    static const int WINDOW_SIZE_Y = 726;
+    static const int WINDOW_SIZE_Y = 802;
     static const int VIS_STRIP_Y   = 219;  // y-position of the visualizer strip
     static const int VIS_STRIP_H   = 52;   // height of the visualizer strip
 };

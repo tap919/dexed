@@ -169,6 +169,12 @@ void DexedAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) 
     keyboardState.reset();
     
     lfo.reset(data + 137);
+
+    // Initialise per-voice drift state
+    for (int i = 0; i < MAX_ACTIVE_NOTES; i++) {
+        voiceDrift[i]    = 0.f;
+        voiceDriftVel[i] = 0.f;
+    }
     
     nextMidi = new MidiMessage(0xF0);
 	midiMsg = new MidiMessage(0xF0);
@@ -218,6 +224,39 @@ void DexedAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
     
     MidiBuffer::Iterator it(midiMessages);
     hasMidiMessage = it.getNextEvent(*nextMidi,midiEventPos);
+
+    // Update per-voice drift (Ornstein-Uhlenbeck random walk, once per block)
+    {
+        float driftAmt = fx.uiDrift;
+        if (driftAmt > 0.f) {
+            // max drift in Q24 logfreq units: 0..1 maps to 0..~20 cents
+            // 1 cent ≈ 2^24 / 1200 ≈ 13981 units
+            const float maxDrift = driftAmt * 20.f * 13981.f;
+            const float friction = 0.985f;  // slow decay
+            const float noiseScale = maxDrift * 0.04f;
+            Random &rng = Random::getSystemRandom();
+            for (int note = 0; note < MAX_ACTIVE_NOTES; note++) {
+                if (voices[note].live) {
+                    float noise = (rng.nextFloat() * 2.f - 1.f) * noiseScale;
+                    voiceDriftVel[note] = voiceDriftVel[note] * friction + noise;
+                    voiceDrift[note] += voiceDriftVel[note];
+                    voiceDrift[note] = juce::jlimit(-maxDrift, maxDrift, voiceDrift[note]);
+                    voices[note].dx7_note->driftOffset = (int32_t)voiceDrift[note];
+                } else {
+                    voiceDrift[note]    = 0.f;
+                    voiceDriftVel[note] = 0.f;
+                    voices[note].dx7_note->driftOffset = 0;
+                }
+            }
+        } else {
+            // Ensure drift is cleared when knob is at zero
+            for (int note = 0; note < MAX_ACTIVE_NOTES; note++) {
+                voiceDrift[note]    = 0.f;
+                voiceDriftVel[note] = 0.f;
+                voices[note].dx7_note->driftOffset = 0;
+            }
+        }
+    }
 
     float *channelData = buffer.getWritePointer(0);
   

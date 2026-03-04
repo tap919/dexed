@@ -70,6 +70,9 @@ public:
     int mpePitchBend = 8192;
     int mpePressure = 0;
     int mpeTimbre = 0;
+
+    // Per-voice pitch drift offset in Q24 logfreq units (0 = no drift)
+    int32_t driftOffset = 0;
     
 private:
     bool initialised_;

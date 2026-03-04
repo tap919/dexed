@@ -266,7 +266,7 @@ void Dx7Note::compute(int32_t *buf, int32_t lfo_val, int32_t lfo_delay, const Co
         pb = newpb;
     }
     
-    int32_t pitch_base = pb + ctrls->masterTune;
+    int32_t pitch_base = pb + ctrls->masterTune + driftOffset;
     pitch_mod += pitch_base;
     
     // ==== AMP MOD ====

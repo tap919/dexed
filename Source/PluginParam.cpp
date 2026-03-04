@@ -390,6 +390,9 @@ void CtrlFloat::updateComponent() {
     if (slider != NULL) {
         slider->setValue(*vPointer, dontSendNotification);
     }
+    if (button != NULL) {
+        button->setToggleState(*vPointer > 0.5f, dontSendNotification);
+    }
 }
 
 // ************************************************************************
@@ -501,6 +504,27 @@ void DexedAudioProcessor::initCtrl() {
     fxChorusMode.reset(new CtrlFloat("Chorus", &fx.uiChorusMode));
     ctrl.add(fxChorusMode.get());
     
+    fxDrift.reset(new CtrlFloat("Drift", &fx.uiDrift));
+    ctrl.add(fxDrift.get());
+
+    fxSaturation.reset(new CtrlFloat("Saturation", &fx.uiSaturation));
+    ctrl.add(fxSaturation.get());
+
+    fxReverse.reset(new CtrlFloat("Reverse", &fx.uiReverse));
+    ctrl.add(fxReverse.get());
+
+    fxEqLow.reset(new CtrlFloat("EQ Low", &fx.uiEqLowGain));
+    ctrl.add(fxEqLow.get());
+
+    fxEqLowMid.reset(new CtrlFloat("EQ Low-Mid", &fx.uiEqLowMidGain));
+    ctrl.add(fxEqLowMid.get());
+
+    fxEqHighMid.reset(new CtrlFloat("EQ High-Mid", &fx.uiEqHighMidGain));
+    ctrl.add(fxEqHighMid.get());
+
+    fxEqHigh.reset(new CtrlFloat("EQ High", &fx.uiEqHighGain));
+    ctrl.add(fxEqHigh.get());
+
     output.reset(new CtrlFloat("Output", &fx.uiGain));
     ctrl.add(output.get());
 

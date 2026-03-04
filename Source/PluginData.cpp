@@ -322,6 +322,13 @@ void DexedAudioProcessor::getStateInformation(MemoryBlock& destData) {
     dexedState.setAttribute("cutoff", fx.uiCutoff);
     dexedState.setAttribute("reso", fx.uiReso);
     dexedState.setAttribute("gain", fx.uiGain);
+    dexedState.setAttribute("drift", fx.uiDrift);
+    dexedState.setAttribute("saturation", fx.uiSaturation);
+    dexedState.setAttribute("reverse", fx.uiReverse);
+    dexedState.setAttribute("eqLow",     fx.uiEqLowGain);
+    dexedState.setAttribute("eqLowMid",  fx.uiEqLowMidGain);
+    dexedState.setAttribute("eqHighMid", fx.uiEqHighMidGain);
+    dexedState.setAttribute("eqHigh",    fx.uiEqHighGain);
     dexedState.setAttribute("currentProgram", currentProgram);
     dexedState.setAttribute("engineType", (int) engineType);
     dexedState.setAttribute("masterTune", controllers.masterTune);
@@ -389,6 +396,13 @@ void DexedAudioProcessor::setStateInformation(const void* source, int sizeInByte
     fx.uiCutoff = root->getDoubleAttribute("cutoff");
     fx.uiReso = root->getDoubleAttribute("reso");
     fx.uiGain = root->getDoubleAttribute("gain");
+    fx.uiDrift       = (float) root->getDoubleAttribute("drift",       0.0);
+    fx.uiSaturation  = (float) root->getDoubleAttribute("saturation",  0.0);
+    fx.uiReverse     = (float) root->getDoubleAttribute("reverse",     0.0);
+    fx.uiEqLowGain     = (float) root->getDoubleAttribute("eqLow",     0.5);
+    fx.uiEqLowMidGain  = (float) root->getDoubleAttribute("eqLowMid",  0.5);
+    fx.uiEqHighMidGain = (float) root->getDoubleAttribute("eqHighMid", 0.5);
+    fx.uiEqHighGain    = (float) root->getDoubleAttribute("eqHigh",    0.5);
     currentProgram = root->getIntAttribute("currentProgram");
     
     String opSwitchValue = root->getStringAttribute("opSwitch");
