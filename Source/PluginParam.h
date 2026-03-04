@@ -76,13 +76,22 @@ public:
 
 class CtrlFloat : public Ctrl {
 	float *vPointer;
+    std::function<String(float)> valueFormatter;
 public:
-
-	CtrlFloat(String name, float *storageValue);
+    /** Create a CtrlFloat with an optional display formatter.
+     *  The formatter receives the current float value (0..1) and should
+     *  return a human-readable string shown on the LCD when the knob is
+     *  hovered or moved.  If nullptr the raw float is shown.
+     */
+	CtrlFloat(String name, float *storageValue,
+              std::function<String(float)> fmt = nullptr);
 	void setValueHost(float f);
 	float getValueHost();
 	String getValueDisplay();
     void updateComponent();
+    void updateDisplayName() override;
+    void sliderValueChanged(Slider* moved) override;
+    void buttonClicked(Button* b) override;
 };
 
 // CtrlDX is a controller that is related to DX parameters

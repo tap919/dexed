@@ -367,8 +367,10 @@ public:
 
 // ************************************************************************
 // CtrlFloat - control float values
-CtrlFloat::CtrlFloat(String name, float *storageValue) : Ctrl(name) {
+CtrlFloat::CtrlFloat(String name, float *storageValue,
+                     std::function<String(float)> fmt) : Ctrl(name) {
     vPointer = storageValue;
+    valueFormatter = fmt;
 }
 
 float CtrlFloat::getValueHost() {
@@ -381,9 +383,13 @@ void CtrlFloat::setValueHost(float v) {
 }
 
 String CtrlFloat::getValueDisplay() {
-    String display;
-    display << *vPointer;
-    return display;
+    if (valueFormatter) {
+        return valueFormatter(*vPointer);
+    } else {
+        String display;
+        display << *vPointer;
+        return display;
+    }
 }
 
 void CtrlFloat::updateComponent() {
@@ -393,6 +399,24 @@ void CtrlFloat::updateComponent() {
     if (button != NULL) {
         button->setToggleState(*vPointer > 0.5f, dontSendNotification);
     }
+}
+
+void CtrlFloat::updateDisplayName() {
+    if (parent == nullptr) return;
+    DexedAudioProcessorEditor *editor =
+        (DexedAudioProcessorEditor *) parent->getActiveEditor();
+    if (editor == nullptr) return;
+    editor->global.setParamMessage(label + ": " + getValueDisplay());
+}
+
+void CtrlFloat::sliderValueChanged(Slider* moved) {
+    Ctrl::sliderValueChanged(moved);
+    updateDisplayName();
+}
+
+void CtrlFloat::buttonClicked(Button* b) {
+    Ctrl::buttonClicked(b);
+    updateDisplayName();
 }
 
 // ************************************************************************
@@ -494,35 +518,55 @@ void CtrlDX::updateComponent() {
 void DexedAudioProcessor::initCtrl() {
     setupStartupCart();
     currentProgram = 0;
-    
+
+    // Display formatters for FX parameters
+    auto pctFmt = [](float v) -> String {
+        return String(roundToInt(v * 100)) + "%";
+    };
+    auto eqFmt = [](float v) -> String {
+        float dB = (v - 0.5f) * 24.f;
+        String s;
+        if (dB > 0.f)  s = "+" + String(dB, 1) + " dB";
+        else           s = String(dB, 1) + " dB";
+        return s;
+    };
+    auto chorusFmt = [](float v) -> String {
+        if (v <= 0.25f) return "OFF";
+        if (v <= 0.75f) return "Mode I";
+        return "Mode II";
+    };
+    auto reverseFmt = [](float v) -> String {
+        return v > 0.5f ? "ON" : "OFF";
+    };
+
     fxCutoff.reset(new CtrlFloat("Cutoff", &fx.uiCutoff));
     ctrl.add(fxCutoff.get());
     
     fxReso.reset(new CtrlFloat("Resonance", &fx.uiReso));
     ctrl.add(fxReso.get());
 
-    fxChorusMode.reset(new CtrlFloat("Chorus", &fx.uiChorusMode));
+    fxChorusMode.reset(new CtrlFloat("Chorus", &fx.uiChorusMode, chorusFmt));
     ctrl.add(fxChorusMode.get());
     
-    fxDrift.reset(new CtrlFloat("Drift", &fx.uiDrift));
+    fxDrift.reset(new CtrlFloat("Drift", &fx.uiDrift, pctFmt));
     ctrl.add(fxDrift.get());
 
-    fxSaturation.reset(new CtrlFloat("Saturation", &fx.uiSaturation));
+    fxSaturation.reset(new CtrlFloat("Saturation", &fx.uiSaturation, pctFmt));
     ctrl.add(fxSaturation.get());
 
-    fxReverse.reset(new CtrlFloat("Reverse", &fx.uiReverse));
+    fxReverse.reset(new CtrlFloat("Reverse", &fx.uiReverse, reverseFmt));
     ctrl.add(fxReverse.get());
 
-    fxEqLow.reset(new CtrlFloat("EQ Low", &fx.uiEqLowGain));
+    fxEqLow.reset(new CtrlFloat("EQ Low", &fx.uiEqLowGain, eqFmt));
     ctrl.add(fxEqLow.get());
 
-    fxEqLowMid.reset(new CtrlFloat("EQ Low-Mid", &fx.uiEqLowMidGain));
+    fxEqLowMid.reset(new CtrlFloat("EQ Low-Mid", &fx.uiEqLowMidGain, eqFmt));
     ctrl.add(fxEqLowMid.get());
 
-    fxEqHighMid.reset(new CtrlFloat("EQ High-Mid", &fx.uiEqHighMidGain));
+    fxEqHighMid.reset(new CtrlFloat("EQ High-Mid", &fx.uiEqHighMidGain, eqFmt));
     ctrl.add(fxEqHighMid.get());
 
-    fxEqHigh.reset(new CtrlFloat("EQ High", &fx.uiEqHighGain));
+    fxEqHigh.reset(new CtrlFloat("EQ High", &fx.uiEqHighGain, eqFmt));
     ctrl.add(fxEqHigh.get());
 
     output.reset(new CtrlFloat("Output", &fx.uiGain));
