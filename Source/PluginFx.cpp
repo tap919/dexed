@@ -191,8 +191,9 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
     // Juno-style BBD chorus
     int chorusMode = (uiChorusMode <= 0.25f) ? 0 : (uiChorusMode <= 0.75f) ? 1 : 2;
     if (chorusMode == 0) {
-        // No chorus: copy mono to right
-        memcpy(right, left, (size_t)sampleSize * sizeof(float));
+        // No chorus: copy mono to right (skip if same buffer)
+        if (right != left)
+            memcpy(right, left, (size_t)sampleSize * sizeof(float));
     } else {
         // Roland Juno chorus: modulated BBD delay
         // Mode I: 0.513 Hz LFO, Mode II: 0.863 Hz LFO
