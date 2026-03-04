@@ -204,7 +204,7 @@ public:
 /**
  * Futuristic oscilloscope-style waveform visualizer.
  * Displays a glowing blue waveform in the center of the UI.
- * Call pushSamples() from the editor's timer callback to update.
+ * Call updateFromRingBuffer() from the editor's timer callback to update.
  */
 class WaveformVisualizer : public Component {
 public:
