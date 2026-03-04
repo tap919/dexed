@@ -58,6 +58,13 @@ class PluginFx {
     float dc_id;
     float dc_od;
     float dc_r;
+
+    // Juno-style BBD chorus
+    static const int CHORUS_DELAY_LEN = 8192;
+    float chorusBufL[CHORUS_DELAY_LEN];
+    float chorusBufR[CHORUS_DELAY_LEN];
+    int   chorusWritePos;
+    float chorusLfoPhase;
     
 public:
     PluginFx();
@@ -66,9 +73,12 @@ public:
     float uiCutoff;
     float uiReso;
     float uiGain;
+    // 0 = off, 0.5 = mode I, 1.0 = mode II
+    float uiChorusMode;
     
     void init(int sampleRate);
-    void process(float *work, int sampleSize);
+    // Stereo-aware process: left[] is filtered in-place, right[] gets chorus-widened output
+    void process(float *left, float *right, int sampleSize);
 };
 
 #endif  // PLUGINFX_H_INCLUDED

@@ -361,15 +361,28 @@ OperatorEditor::~OperatorEditor()
 void OperatorEditor::paint (juce::Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
-    g.drawImage(background, 0, 0, 287, 218, 0, 0, 574, 436);
+    // Futuristic dark-navy background with blue border
+    g.fillAll(Colour(0xFF070E1A));
+
+    // Outer blue border
+    g.setColour(Colour(0xFF1E90FF).withAlpha(0.4f));
+    g.drawRect(0, 0, 287, 218, 1);
+
+    // Inner top header band
+    g.setColour(Colour(0xFF0A1525));
+    g.fillRect(0, 0, 287, 50);
+
+    // Header border line
+    g.setColour(Colour(0xFF1E90FF).withAlpha(0.3f));
+    g.drawHorizontalLine(50, 0.0f, 287.0f);
     //[/UserPrePaint]
 
     //[UserPaint] Add your own custom painting code here..
 
     if ( opSwitch->getToggleState() )
-        g.setColour(Colours::white);
+        g.setColour(Colour(0xFF1E90FF));
     else
-        g.setColour(DXLookNFeel::roundBackground);
+        g.setColour(Colour(0xFF1E90FF).withAlpha(0.25f));
 
     g.setFont(Font (30.00f, Font::plain));
     g.drawText(opNum, 250, 14, 30, 30, Justification::centred, true);

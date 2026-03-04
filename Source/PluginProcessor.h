@@ -22,6 +22,7 @@
 #define PLUGINPROCESSOR_H_INCLUDED
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include <atomic>
 
 #include "clap-juce-extensions/clap-juce-extensions.h"
 
@@ -148,6 +149,11 @@ public :
     float vuSignal;
     double vuDecayFactor = 0.999361; // (for 48 kHz sampling rate)
     bool showKeyboard;
+
+    // Waveform data for visualizer (captured in processBlock, read in editor timerCallback)
+    static const int WAVEFORM_CAPTURE_SIZE = 512;
+    float waveformCapture[WAVEFORM_CAPTURE_SIZE];
+    std::atomic<int> waveformCapturePos;
     int getEngineType();
     void setEngineType(int rs);
     
@@ -172,6 +178,7 @@ public :
 
     std::unique_ptr<CtrlFloat> fxCutoff;
     std::unique_ptr<CtrlFloat> fxReso;
+    std::unique_ptr<CtrlFloat> fxChorusMode;
     std::unique_ptr<CtrlFloat> output;
     std::unique_ptr<Ctrl> tune;
     std::unique_ptr<Ctrl> monoModeCtrl;

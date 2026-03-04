@@ -497,6 +497,9 @@ void DexedAudioProcessor::initCtrl() {
     
     fxReso.reset(new CtrlFloat("Resonance", &fx.uiReso));
     ctrl.add(fxReso.get());
+
+    fxChorusMode.reset(new CtrlFloat("Chorus", &fx.uiChorusMode));
+    ctrl.add(fxChorusMode.get());
     
     output.reset(new CtrlFloat("Output", &fx.uiGain));
     ctrl.add(output.get());

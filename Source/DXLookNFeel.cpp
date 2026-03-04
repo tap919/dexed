@@ -88,29 +88,29 @@ DXLookNFeel::DXLookNFeel() {
     Colour ctrlBackground;
     
     DexedAudioProcessor::dexedAppDir.setAsCurrentWorkingDirectory();
-    ctrlBackground = Colour(20,18,18);
+    ctrlBackground = Colour(0, 10, 22);
 
     // WARNING! If you modify the colour IDs here, please actualize the file ''DexedTheme.md'' 
     // in the subdirectory ``~/dexed/Documentation/``    
 
-    REG_COLOUR(TextButton::buttonColourId,Colour(0xFF0FC00F));
-    REG_COLOUR(TextButton::textColourOnId, Colours::white);
-    REG_COLOUR(TextButton::textColourOffId, Colours::white);
-    REG_COLOUR(Slider::rotarySliderOutlineColourId,Colour(0xFF0FC00F));
-    REG_COLOUR(Slider::rotarySliderFillColourId,Colour(0xFFFFFFFF));
+    REG_COLOUR(TextButton::buttonColourId,Colour(0xFFFFBF00));
+    REG_COLOUR(TextButton::textColourOnId, Colours::black);
+    REG_COLOUR(TextButton::textColourOffId, Colours::black);
+    REG_COLOUR(Slider::rotarySliderOutlineColourId,Colour(0xFF1E90FF));
+    REG_COLOUR(Slider::rotarySliderFillColourId,Colour(0xFFFFBF00));
     REG_COLOUR(AlertWindow::backgroundColourId,lightBackground);
     REG_COLOUR(AlertWindow::textColourId, Colours::white);
     REG_COLOUR(TextEditor::backgroundColourId,ctrlBackground);
-    REG_COLOUR(TextEditor::textColourId, Colours::white);
+    REG_COLOUR(TextEditor::textColourId, Colour(0xFF00CFFF));
     REG_COLOUR(TextEditor::highlightColourId, fillColour);
     REG_COLOUR(TextEditor::outlineColourId, Colours::transparentBlack);
     REG_COLOUR(ComboBox::backgroundColourId, ctrlBackground);
-    REG_COLOUR(ComboBox::textColourId, Colours::white);
-    REG_COLOUR(ComboBox::buttonColourId, Colours::white);
+    REG_COLOUR(ComboBox::textColourId, Colour(0xFF00CFFF));
+    REG_COLOUR(ComboBox::buttonColourId, Colour(0xFF1E90FF));
     REG_COLOUR(PopupMenu::backgroundColourId, background);
     REG_COLOUR(PopupMenu::textColourId, Colours::white);
-    REG_COLOUR(PopupMenu::highlightedTextColourId, Colours::white);
-    REG_COLOUR(PopupMenu::highlightedBackgroundColourId, fillColour);
+    REG_COLOUR(PopupMenu::highlightedTextColourId, Colours::black);
+    REG_COLOUR(PopupMenu::highlightedBackgroundColourId, Colour(0xFFFFBF00));
     REG_COLOUR(TreeView::backgroundColourId, background);
     REG_COLOUR(DirectoryContentsDisplayComponent::highlightColourId, fillColour);
     REG_COLOUR(DirectoryContentsDisplayComponent::textColourId, Colours::white);
@@ -355,8 +355,8 @@ void DXLookNFeel::positionComboBoxText(ComboBox& box, Label& label) {
     LookAndFeel_V4::positionComboBoxText(box, label);
 }
 
-Colour DXLookNFeel::fillColour = Colour(77,159,151);
-Colour DXLookNFeel::lightBackground = Colour(78,72,63);
-Colour DXLookNFeel::background = Colour(60,50,47);
-Colour DXLookNFeel::roundBackground = Colour(58,52,48);
+Colour DXLookNFeel::fillColour = Colour(0xFF1E90FF);
+Colour DXLookNFeel::lightBackground = Colour(0xFF0D1B2A);
+Colour DXLookNFeel::background = Colour(0xFF070E1A);
+Colour DXLookNFeel::roundBackground = Colour(0xFF0A1525);
 

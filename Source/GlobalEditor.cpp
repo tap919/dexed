@@ -514,7 +514,26 @@ GlobalEditor::~GlobalEditor()
 void GlobalEditor::paint (juce::Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
-    g.drawImage(background, 0, 0, 864, 144, 0, 0, 1728, 288);
+    // Futuristic dark-navy background instead of the original bitmap
+    g.fillAll(Colour(0xFF070E1A));
+
+    // Section dividers with blue glow
+    g.setColour(Colour(0xFF1E90FF).withAlpha(0.25f));
+    // Horizontal separator line at top
+    g.drawHorizontalLine(0, 0.0f, 864.0f);
+    // Vertical section separators
+    for (int x : { 152, 332, 496, 558, 730 })
+        g.drawVerticalLine(x, 2.0f, 142.0f);
+
+    // Section labels
+    g.setFont(Font(9.5f, Font::bold));
+    g.setColour(Colour(0xFFFFBF00));  // McDonald's yellow labels
+    g.drawText("MASTER",   2,   128, 148, 12, Justification::centred, false);
+    g.drawText("FILTER",   154, 128, 176, 12, Justification::centred, false);
+    g.drawText("ALGORITHM",334, 128, 160, 12, Justification::centred, false);
+    g.drawText("MOOG FILTER",334, 3,  160, 12, Justification::centred, false);
+    g.drawText("LFO",      498, 128, 230, 12, Justification::centred, false);
+    g.drawText("PITCH EG", 732, 128, 130, 12, Justification::centred, false);
     //[/UserPrePaint]
 
     //[UserPaint] Add your own custom painting code here..
