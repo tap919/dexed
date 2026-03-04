@@ -457,7 +457,6 @@ GlobalEditor::GlobalEditor ()
     reverseBtn.reset(new juce::ToggleButton("reverseBtn"));
     addAndMakeVisible(reverseBtn.get());
     reverseBtn->setButtonText("REV");
-    reverseBtn->addListener(this);
     reverseBtn->setBounds(122, 160, 54, 24);
 
     eqLow.reset(new DXSlider("eqLow"));
@@ -798,10 +797,6 @@ void GlobalEditor::buttonClicked (juce::Button* buttonThatWasClicked)
         //[UserButtonCode_monoMode] -- add your button handler code here..
         //[/UserButtonCode_monoMode]
     }
-    else if (buttonThatWasClicked == reverseBtn.get())
-    {
-        processor->fxReverse->publishValue(reverseBtn->getToggleState() ? 1.0f : 0.0f);
-    }
     else if (buttonThatWasClicked == aboutButton.get())
     {
         //[UserButtonCode_aboutButton] -- add your button handler code here..
@@ -852,8 +847,7 @@ void GlobalEditor::bind(DexedAudioProcessorEditor *edit) {
     processor->fxEqLowMid->bind(eqLowMid.get());
     processor->fxEqHighMid->bind(eqHighMid.get());
     processor->fxEqHigh->bind(eqHigh.get());
-    // Reverse is a toggle button – sync its state from the current parameter
-    reverseBtn->setToggleState(processor->fxReverse->getValueHost() > 0.5f, dontSendNotification);
+    processor->fxReverse->bind(reverseBtn.get());
 
     algoDisplay->algo = (char *) &(processor->data[134]);
     pitchEnvDisplay->pvalues = &(processor->data[126]);

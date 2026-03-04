@@ -390,6 +390,9 @@ void CtrlFloat::updateComponent() {
     if (slider != NULL) {
         slider->setValue(*vPointer, dontSendNotification);
     }
+    if (button != NULL) {
+        button->setToggleState(*vPointer > 0.5f, dontSendNotification);
+    }
 }
 
 // ************************************************************************
