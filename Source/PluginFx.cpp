@@ -387,12 +387,13 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
         }
     }
 
-    // ---- Saturation on right channel (after chorus widening) ----
+    // ---- Saturation on both channels (after chorus widening, stereo only) ----
     if (uiSaturation > 0.f && right != left) {
         static const float kSatMaxDrive = 9.f;
         float drive = 1.f + uiSaturation * kSatMaxDrive;
         float inv   = 1.f / tanhf(drive);
         for (int i = 0; i < sampleSize; i++) {
+            left[i]  = tanhf(left[i]  * drive) * inv;
             right[i] = tanhf(right[i] * drive) * inv;
         }
     }
