@@ -166,7 +166,8 @@ void PluginFx::init(int sr) {
 // Band centres: 100 Hz (low shelf), 500 Hz (peak), 3000 Hz (peak), 8000 Hz (high shelf)
 void PluginFx::updateEqCoeffs() {
     const float centres[4] = { 100.f, 500.f, 3000.f, 8000.f };
-    const float Q = 0.707f;
+    // Q = 1/sqrt(2) gives a Butterworth (maximally-flat) response for the peak bands.
+    const float Q = 0.7071f;
 
     float gains[4] = { uiEqLowGain, uiEqLowMidGain, uiEqHighMidGain, uiEqHighGain };
 
@@ -286,8 +287,11 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
     }
 
     // ---- Saturation (tanh soft-clip) ----
+    // drive range: 1x (bypass) to 10x (full saturation), output is normalised
     if (uiSaturation > 0.f) {
-        float drive = 1.f + uiSaturation * 9.f;   // 1x to 10x drive
+        // Scale factor: [0,1] maps to [1x, 10x] drive
+        static const float kSatMaxDrive = 9.f;
+        float drive = 1.f + uiSaturation * kSatMaxDrive;
         float inv   = 1.f / tanhf(drive);          // normalise to keep 0dB at low input
         for (int i = 0; i < sampleSize; i++) {
             left[i] = tanhf(left[i] * drive) * inv;
@@ -385,7 +389,8 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
 
     // ---- Saturation on right channel (after chorus widening) ----
     if (uiSaturation > 0.f && right != left) {
-        float drive = 1.f + uiSaturation * 9.f;
+        static const float kSatMaxDrive = 9.f;
+        float drive = 1.f + uiSaturation * kSatMaxDrive;
         float inv   = 1.f / tanhf(drive);
         for (int i = 0; i < sampleSize; i++) {
             right[i] = tanhf(right[i] * drive) * inv;
