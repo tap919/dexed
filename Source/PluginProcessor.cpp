@@ -311,12 +311,20 @@ void DexedAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
             vuSignal *= vuDecayFactor;
         else
             vuSignal = 0;
+    }
 
-        // Fill waveform capture ring buffer for visualizer
-        waveformCapture[waveformCapturePos.load(std::memory_order_relaxed)] = channelData[i];
-        waveformCapturePos.store(
-            (waveformCapturePos.load(std::memory_order_relaxed) + 1) % WAVEFORM_CAPTURE_SIZE,
-            std::memory_order_release);
+    // Fill waveform capture ring buffer for visualizer using a local position
+    // to avoid per-sample atomic loads/stores in the realtime thread.
+    // WAVEFORM_CAPTURE_SIZE must be a power of 2 for the bitmask wrap to work.
+    static_assert((DexedAudioProcessor::WAVEFORM_CAPTURE_SIZE & (DexedAudioProcessor::WAVEFORM_CAPTURE_SIZE - 1)) == 0,
+                  "WAVEFORM_CAPTURE_SIZE must be a power of 2");
+    {
+        int pos = waveformCapturePos.load(std::memory_order_relaxed);
+        for (int j = 0; j < numSamples; j++) {
+            waveformCapture[pos] = channelData[j];
+            pos = (pos + 1) & (WAVEFORM_CAPTURE_SIZE - 1);
+        }
+        waveformCapturePos.store(pos, std::memory_order_release);
     }
 }
 

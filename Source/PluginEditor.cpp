@@ -70,7 +70,7 @@ DexedAudioProcessorEditor::DexedAudioProcessorEditor (DexedAudioProcessor* owner
     chorusOffBtn.reset(new TextButton("CHORUS OFF"));
     chorusOffBtn->setButtonText("OFF");
     chorusOffBtn->onClick = [this] {
-        processor->fxChorusMode->setValueHost(0.0f);
+        processor->fxChorusMode->publishValue(0.0f);
         updateChorusButtons();
     };
     frameComponent.addAndMakeVisible(chorusOffBtn.get());
@@ -79,7 +79,7 @@ DexedAudioProcessorEditor::DexedAudioProcessorEditor (DexedAudioProcessor* owner
     chorusIBtn.reset(new TextButton("CHORUS I"));
     chorusIBtn->setButtonText("CHR I");
     chorusIBtn->onClick = [this] {
-        processor->fxChorusMode->setValueHost(0.5f);
+        processor->fxChorusMode->publishValue(0.5f);
         updateChorusButtons();
     };
     frameComponent.addAndMakeVisible(chorusIBtn.get());
@@ -88,7 +88,7 @@ DexedAudioProcessorEditor::DexedAudioProcessorEditor (DexedAudioProcessor* owner
     chorusIIBtn.reset(new TextButton("CHORUS II"));
     chorusIIBtn->setButtonText("CHR II");
     chorusIIBtn->onClick = [this] {
-        processor->fxChorusMode->setValueHost(1.0f);
+        processor->fxChorusMode->publishValue(1.0f);
         updateChorusButtons();
     };
     frameComponent.addAndMakeVisible(chorusIIBtn.get());
@@ -369,6 +369,7 @@ void DexedAudioProcessorEditor::updateUI() {
     rebuildProgramCombobox();
     global.updateDisplay();
     cartManager.updateCartFilename();
+    updateChorusButtons();
 }
 
 void DexedAudioProcessorEditor::rebuildProgramCombobox() {
