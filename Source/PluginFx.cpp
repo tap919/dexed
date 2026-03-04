@@ -53,11 +53,64 @@ static float logsc(float param, const float min,const float max,const float roll
 	return ((expf(param * logf(rolloff+1)) - 1.0f) / (rolloff)) * (max-min) + min;
 }
 
+// ---- EQ biquad coefficient helpers (RBJ Audio EQ Cookbook) ----
+
+static void calcLowShelf(BiquadFilter &f, float fs, float fc, float dBgain) {
+    float A     = powf(10.f, dBgain / 40.f);
+    float w0    = 2.f * juce::MathConstants<float>::pi * fc / fs;
+    float cosw0 = cosf(w0), sinw0 = sinf(w0);
+    float alpha = sinw0 / 2.f * sqrtf((A + 1.f/A) * (1.f - 1.f) + 2.f);
+    // shelf slope S=1 simplifies the sqrt to sqrt(2)
+    alpha = sinw0 / 2.f * sqrtf(2.f);  // S=1 shelf
+    float sqA   = sqrtf(A);
+    float a0    = (A+1) + (A-1)*cosw0 + 2*sqA*alpha;
+    f.b0 = ( A*((A+1) - (A-1)*cosw0 + 2*sqA*alpha) ) / a0;
+    f.b1 = ( 2*A*((A-1) - (A+1)*cosw0) )              / a0;
+    f.b2 = ( A*((A+1) - (A-1)*cosw0 - 2*sqA*alpha) )  / a0;
+    f.a1 = ( -2*((A-1) + (A+1)*cosw0) )               / a0;
+    f.a2 = ( (A+1) + (A-1)*cosw0 - 2*sqA*alpha )       / a0;
+}
+
+static void calcHighShelf(BiquadFilter &f, float fs, float fc, float dBgain) {
+    float A     = powf(10.f, dBgain / 40.f);
+    float w0    = 2.f * juce::MathConstants<float>::pi * fc / fs;
+    float cosw0 = cosf(w0), sinw0 = sinf(w0);
+    float alpha = sinw0 / 2.f * sqrtf(2.f);  // S=1 shelf
+    float sqA   = sqrtf(A);
+    float a0    = (A+1) - (A-1)*cosw0 + 2*sqA*alpha;
+    f.b0 = ( A*((A+1) + (A-1)*cosw0 + 2*sqA*alpha) )  / a0;
+    f.b1 = ( -2*A*((A-1) + (A+1)*cosw0) )             / a0;
+    f.b2 = ( A*((A+1) + (A-1)*cosw0 - 2*sqA*alpha) )  / a0;
+    f.a1 = ( 2*((A-1) - (A+1)*cosw0) )                / a0;
+    f.a2 = ( (A+1) - (A-1)*cosw0 - 2*sqA*alpha )       / a0;
+}
+
+static void calcPeak(BiquadFilter &f, float fs, float fc, float dBgain, float Q) {
+    float A     = powf(10.f, dBgain / 40.f);
+    float w0    = 2.f * juce::MathConstants<float>::pi * fc / fs;
+    float cosw0 = cosf(w0), sinw0 = sinf(w0);
+    float alpha = sinw0 / (2.f * Q);
+    float a0    = 1.f + alpha / A;
+    f.b0 = (1.f + alpha * A) / a0;
+    f.b1 = (-2.f * cosw0)    / a0;
+    f.b2 = (1.f - alpha * A) / a0;
+    f.a1 = (-2.f * cosw0)    / a0;
+    f.a2 = (1.f - alpha / A) / a0;
+}
+
 PluginFx::PluginFx() {
     uiCutoff = 1;
     uiReso = 0;
     uiGain = 1;
     uiChorusMode = 0;
+    uiDrift = 0;
+    uiSaturation = 0;
+    uiReverse = 0;
+    uiEqLowGain     = 0.5f;
+    uiEqLowMidGain  = 0.5f;
+    uiEqHighMidGain = 0.5f;
+    uiEqHighGain    = 0.5f;
+    for (int i = 0; i < 4; i++) pEqGain[i] = 0.5f;
 }
 
 void PluginFx::init(int sr) {
@@ -93,6 +146,50 @@ void PluginFx::init(int sr) {
     chorusLfoPhase = 0.0f;
     memset(chorusBufL, 0, sizeof(chorusBufL));
     memset(chorusBufR, 0, sizeof(chorusBufR));
+
+    // EQ state – force recalculation on first use
+    for (int i = 0; i < 4; i++) {
+        eqL[i].clear();
+        eqR[i].clear();
+        pEqGain[i] = -999.f;  // invalid → will trigger recalc
+    }
+    updateEqCoeffs();
+
+    // Reverse buffer
+    revWriteBuf = 0;
+    revWritePos = 0;
+    memset(revBufL, 0, sizeof(revBufL));
+    memset(revBufR, 0, sizeof(revBufR));
+}
+
+// Recompute EQ biquad coefficients when gain values change.
+// Band centres: 100 Hz (low shelf), 500 Hz (peak), 3000 Hz (peak), 8000 Hz (high shelf)
+void PluginFx::updateEqCoeffs() {
+    const float centres[4] = { 100.f, 500.f, 3000.f, 8000.f };
+    const float Q = 0.707f;
+
+    float gains[4] = { uiEqLowGain, uiEqLowMidGain, uiEqHighMidGain, uiEqHighGain };
+
+    bool changed = false;
+    for (int i = 0; i < 4; i++) {
+        if (gains[i] != pEqGain[i]) { changed = true; break; }
+    }
+    if (!changed) return;
+
+    for (int i = 0; i < 4; i++) {
+        float dBgain = (gains[i] - 0.5f) * 24.f;  // 0..1 → -12..+12 dB
+        if (i == 0) {
+            calcLowShelf (eqL[i], sampleRate, centres[i], dBgain);
+            calcLowShelf (eqR[i], sampleRate, centres[i], dBgain);
+        } else if (i == 3) {
+            calcHighShelf(eqL[i], sampleRate, centres[i], dBgain);
+            calcHighShelf(eqR[i], sampleRate, centres[i], dBgain);
+        } else {
+            calcPeak     (eqL[i], sampleRate, centres[i], dBgain, Q);
+            calcPeak     (eqR[i], sampleRate, centres[i], dBgain, Q);
+        }
+        pEqGain[i] = gains[i];
+    }
 }
 
 inline float PluginFx::NR24(float sample,float g,float lpc) {
@@ -188,6 +285,30 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
         }
     }
 
+    // ---- Saturation (tanh soft-clip) ----
+    if (uiSaturation > 0.f) {
+        float drive = 1.f + uiSaturation * 9.f;   // 1x to 10x drive
+        float inv   = 1.f / tanhf(drive);          // normalise to keep 0dB at low input
+        for (int i = 0; i < sampleSize; i++) {
+            left[i] = tanhf(left[i] * drive) * inv;
+        }
+    }
+
+    // ---- 4-band EQ ----
+    bool eqActive = (uiEqLowGain != 0.5f || uiEqLowMidGain != 0.5f ||
+                     uiEqHighMidGain != 0.5f || uiEqHighGain != 0.5f);
+    if (eqActive) {
+        updateEqCoeffs();
+        for (int i = 0; i < sampleSize; i++) {
+            float s = left[i];
+            s = eqL[0].process(s);
+            s = eqL[1].process(s);
+            s = eqL[2].process(s);
+            s = eqL[3].process(s);
+            left[i] = s;
+        }
+    }
+
     // Juno-style BBD chorus
     int chorusMode = (uiChorusMode <= 0.25f) ? 0 : (uiChorusMode <= 0.75f) ? 1 : 2;
     if (chorusMode == 0) {
@@ -247,6 +368,53 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
             chorusWritePos = (chorusWritePos + 1) & (CHORUS_DELAY_LEN - 1);
             chorusLfoPhase += lfoInc;
             if (chorusLfoPhase >= 1.0f) chorusLfoPhase -= 1.0f;
+        }
+    }
+
+    // ---- Apply EQ to right channel independently (after chorus has been applied) ----
+    if (eqActive && right != left) {
+        for (int i = 0; i < sampleSize; i++) {
+            float s = right[i];
+            s = eqR[0].process(s);
+            s = eqR[1].process(s);
+            s = eqR[2].process(s);
+            s = eqR[3].process(s);
+            right[i] = s;
+        }
+    }
+
+    // ---- Saturation on right channel (after chorus widening) ----
+    if (uiSaturation > 0.f && right != left) {
+        float drive = 1.f + uiSaturation * 9.f;
+        float inv   = 1.f / tanhf(drive);
+        for (int i = 0; i < sampleSize; i++) {
+            right[i] = tanhf(right[i] * drive) * inv;
+        }
+    }
+
+    // ---- Reverse (ping-pong buffer) ----
+    // When active: simultaneously write into the current segment and read the
+    // previous segment in reverse.  Both positions are kept in lock-step so
+    // that the reversed output is always exactly one segment behind the input.
+    if (uiReverse > 0.5f) {
+        for (int i = 0; i < sampleSize; i++) {
+            int readBuf = 1 - revWriteBuf;
+            // Reverse-read index mirrors the write position
+            int readIdx = REVERSE_SEG - 1 - revWritePos;
+
+            // Record current input into write buffer
+            revBufL[revWriteBuf][revWritePos] = left[i];
+            revBufR[revWriteBuf][revWritePos] = right[i];
+
+            // Output: reversed read from the other buffer
+            left[i]  = revBufL[readBuf][readIdx];
+            right[i] = revBufR[readBuf][readIdx];
+
+            revWritePos++;
+            if (revWritePos >= REVERSE_SEG) {
+                revWriteBuf = 1 - revWriteBuf;
+                revWritePos = 0;
+            }
         }
     }
 }

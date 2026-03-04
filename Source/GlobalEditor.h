@@ -124,6 +124,15 @@ private:
     std::unique_ptr<juce::ImageButton> aboutButton;
     std::unique_ptr<juce::Slider> tune;
 
+    // New FX controls: drift, saturation, reverse, 4-band EQ
+    std::unique_ptr<juce::Slider> drift;
+    std::unique_ptr<juce::Slider> saturation;
+    std::unique_ptr<juce::ToggleButton> reverseBtn;
+    std::unique_ptr<juce::Slider> eqLow;
+    std::unique_ptr<juce::Slider> eqLowMid;
+    std::unique_ptr<juce::Slider> eqHighMid;
+    std::unique_ptr<juce::Slider> eqHigh;
+
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GlobalEditor)

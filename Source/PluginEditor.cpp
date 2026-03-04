@@ -112,11 +112,11 @@ DexedAudioProcessorEditor::DexedAudioProcessorEditor (DexedAudioProcessor* owner
 
     // The DX7 is a badass on the bass, keep it that way
     midiKeyboard.setLowestVisibleKey(24);
-    midiKeyboard.setBounds(4, VIS_STRIP_Y + VIS_STRIP_H + 218 + 144 + 4, getWidth() - 8, 90);
+    midiKeyboard.setBounds(4, VIS_STRIP_Y + VIS_STRIP_H + 218 + 220 + 4, getWidth() - 8, 90);
     midiKeyboard.setTitle("Keyboard keys");
 
     frameComponent.addAndMakeVisible(&global);
-    global.setBounds(2, VIS_STRIP_Y + VIS_STRIP_H + 218, 864, 144);
+    global.setBounds(2, VIS_STRIP_Y + VIS_STRIP_H + 218, 864, 220);
     global.bind(this);
 
     global.setMonoState(processor->isMonoMode());

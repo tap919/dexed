@@ -437,11 +437,66 @@ GlobalEditor::GlobalEditor ()
 
     tune->setBounds (190, 9, 34, 34);
 
+    // ---- New FX controls (bottom strip, y=152..216) ----
+    drift.reset(new DXSlider("drift"));
+    addAndMakeVisible(drift.get());
+    drift->setRange(0, 1, 0);
+    drift->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    drift->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    drift->addListener(this);
+    drift->setBounds(20, 154, 34, 34);
+
+    saturation.reset(new DXSlider("saturation"));
+    addAndMakeVisible(saturation.get());
+    saturation->setRange(0, 1, 0);
+    saturation->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    saturation->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    saturation->addListener(this);
+    saturation->setBounds(74, 154, 34, 34);
+
+    reverseBtn.reset(new juce::ToggleButton("reverseBtn"));
+    addAndMakeVisible(reverseBtn.get());
+    reverseBtn->setButtonText("REV");
+    reverseBtn->addListener(this);
+    reverseBtn->setBounds(122, 160, 54, 24);
+
+    eqLow.reset(new DXSlider("eqLow"));
+    addAndMakeVisible(eqLow.get());
+    eqLow->setRange(0, 1, 0);
+    eqLow->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    eqLow->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    eqLow->addListener(this);
+    eqLow->setBounds(210, 154, 34, 34);
+
+    eqLowMid.reset(new DXSlider("eqLowMid"));
+    addAndMakeVisible(eqLowMid.get());
+    eqLowMid->setRange(0, 1, 0);
+    eqLowMid->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    eqLowMid->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    eqLowMid->addListener(this);
+    eqLowMid->setBounds(258, 154, 34, 34);
+
+    eqHighMid.reset(new DXSlider("eqHighMid"));
+    addAndMakeVisible(eqHighMid.get());
+    eqHighMid->setRange(0, 1, 0);
+    eqHighMid->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    eqHighMid->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    eqHighMid->addListener(this);
+    eqHighMid->setBounds(306, 154, 34, 34);
+
+    eqHigh.reset(new DXSlider("eqHigh"));
+    addAndMakeVisible(eqHigh.get());
+    eqHigh->setRange(0, 1, 0);
+    eqHigh->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    eqHigh->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    eqHigh->addListener(this);
+    eqHigh->setBounds(354, 154, 34, 34);
+
 
     //[UserPreSize]
     //[/UserPreSize]
 
-    setSize (864, 144);
+    setSize (864, 220);
 
 
     //[Constructor] You can add your own custom stuff here..
@@ -504,6 +559,13 @@ GlobalEditor::~GlobalEditor()
     programSelector = nullptr;
     aboutButton = nullptr;
     tune = nullptr;
+    drift = nullptr;
+    saturation = nullptr;
+    reverseBtn = nullptr;
+    eqLow = nullptr;
+    eqLowMid = nullptr;
+    eqHighMid = nullptr;
+    eqHigh = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
@@ -534,6 +596,25 @@ void GlobalEditor::paint (juce::Graphics& g)
     g.drawText("MOOG FILTER",334, 3,  160, 12, Justification::centred, false);
     g.drawText("LFO",      498, 128, 230, 12, Justification::centred, false);
     g.drawText("PITCH EG", 732, 128, 130, 12, Justification::centred, false);
+
+    // Bottom FX strip separator
+    g.setColour(Colour(0xFF1E90FF).withAlpha(0.25f));
+    g.drawHorizontalLine(148, 0.0f, 864.0f);
+
+    // Bottom FX strip section labels
+    g.setColour(Colour(0xFFFFBF00));
+    g.drawText("DRIFT",    2,   207, 60,  12, Justification::centred, false);
+    g.drawText("SAT",      56,  207, 60,  12, Justification::centred, false);
+    g.drawText("REVERSE",  108, 207, 60,  12, Justification::centred, false);
+    g.drawText("4-BAND EQ",190, 207, 210, 12, Justification::centred, false);
+
+    // Sub-labels for EQ bands
+    g.setFont(Font(8.5f));
+    g.setColour(Colour(0xFFAAAAAA));
+    g.drawText("LOW",    200, 194, 42, 10, Justification::centred, false);
+    g.drawText("L-MID",  248, 194, 42, 10, Justification::centred, false);
+    g.drawText("H-MID",  296, 194, 42, 10, Justification::centred, false);
+    g.drawText("HIGH",   344, 194, 42, 10, Justification::centred, false);
     //[/UserPrePaint]
 
     //[UserPaint] Add your own custom painting code here..
@@ -717,6 +798,10 @@ void GlobalEditor::buttonClicked (juce::Button* buttonThatWasClicked)
         //[UserButtonCode_monoMode] -- add your button handler code here..
         //[/UserButtonCode_monoMode]
     }
+    else if (buttonThatWasClicked == reverseBtn.get())
+    {
+        processor->fxReverse->publishValue(reverseBtn->getToggleState() ? 1.0f : 0.0f);
+    }
     else if (buttonThatWasClicked == aboutButton.get())
     {
         //[UserButtonCode_aboutButton] -- add your button handler code here..
@@ -761,6 +846,14 @@ void GlobalEditor::bind(DexedAudioProcessorEditor *edit) {
     processor->output->bind(output.get());
     processor->tune->bind(tune.get());
     processor->monoModeCtrl->bind(monoMode.get());
+    processor->fxDrift->bind(drift.get());
+    processor->fxSaturation->bind(saturation.get());
+    processor->fxEqLow->bind(eqLow.get());
+    processor->fxEqLowMid->bind(eqLowMid.get());
+    processor->fxEqHighMid->bind(eqHighMid.get());
+    processor->fxEqHigh->bind(eqHigh.get());
+    // Reverse is a toggle button – sync its state from the current parameter
+    reverseBtn->setToggleState(processor->fxReverse->getValueHost() > 0.5f, dontSendNotification);
 
     algoDisplay->algo = (char *) &(processor->data[134]);
     pitchEnvDisplay->pvalues = &(processor->data[126]);

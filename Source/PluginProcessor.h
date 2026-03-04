@@ -96,6 +96,10 @@ class DexedAudioProcessor  : public AudioProcessor, public AsyncUpdater, public 
      */
     PluginFx fx;
 
+    // Per-voice drift state (Ornstein-Uhlenbeck random walk)
+    float voiceDrift[16];     // current pitch offset in Q24 logfreq units
+    float voiceDriftVel[16];  // drift velocity
+
     /**
      * This flag is used in the audio thread to know if the voice has changed
      * and needs to be updated.
@@ -179,6 +183,13 @@ public :
     std::unique_ptr<CtrlFloat> fxCutoff;
     std::unique_ptr<CtrlFloat> fxReso;
     std::unique_ptr<CtrlFloat> fxChorusMode;
+    std::unique_ptr<CtrlFloat> fxDrift;
+    std::unique_ptr<CtrlFloat> fxSaturation;
+    std::unique_ptr<CtrlFloat> fxReverse;
+    std::unique_ptr<CtrlFloat> fxEqLow;
+    std::unique_ptr<CtrlFloat> fxEqLowMid;
+    std::unique_ptr<CtrlFloat> fxEqHighMid;
+    std::unique_ptr<CtrlFloat> fxEqHigh;
     std::unique_ptr<CtrlFloat> output;
     std::unique_ptr<Ctrl> tune;
     std::unique_ptr<Ctrl> monoModeCtrl;
