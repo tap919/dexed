@@ -562,7 +562,7 @@ void DexedAudioProcessor::resolvAppDir() {
             if ( parent.isDirectory() ) {
                 dexedAppDir = parent;
             } else {
-                dexedAppDir = File("~/Library/Application Support/TapSynth/TapSynth");
+                dexedAppDir = File("~/Library/Application Support/TapSynth");
             }
         }
     #elif JUCE_WINDOWS
@@ -571,7 +571,7 @@ void DexedAudioProcessor::resolvAppDir() {
         } else if ( File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("Dexed").isDirectory() ) {
             dexedAppDir = File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("Dexed");
         } else {
-            dexedAppDir = File::getSpecialLocation(File::userApplicationDataDirectory).getChildFile("TapSynth").getChildFile("TapSynth");
+            dexedAppDir = File::getSpecialLocation(File::userApplicationDataDirectory).getChildFile("TapSynth");
         }
     #else
         if ( File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("TapSynth").isDirectory() ) {
@@ -581,9 +581,9 @@ void DexedAudioProcessor::resolvAppDir() {
         } else {
             char *xdgHome = getenv("XDG_DATA_HOME");
             if ( xdgHome == nullptr ) {
-                dexedAppDir = File("~/.local/share").getChildFile("TapSynth").getChildFile("TapSynth");
+                dexedAppDir = File("~/.local/share").getChildFile("TapSynth");
             } else {
-                dexedAppDir = File(xdgHome).getChildFile("TapSynth").getChildFile("TapSynth");
+                dexedAppDir = File(xdgHome).getChildFile("TapSynth");
             }
         }
     #endif
