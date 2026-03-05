@@ -145,15 +145,15 @@ DexedAudioProcessorEditor::~DexedAudioProcessorEditor() {
 
 void DexedAudioProcessorEditor::updateChorusButtons() {
     float mode = processor->fxChorusMode->getValueHost();
-    // Highlight the active button with yellow, others default
-    auto highlight = Colour(0xFFFFBF00);
-    auto normal    = Colour(0xFF1E90FF);
+    // Highlight the active button with teal-green, others default
+    auto highlight = Colour(0xFF00E5A0);
+    auto normal    = Colour(0xFF00B8D4);
     chorusOffBtn->setColour(TextButton::buttonColourId, mode <= 0.25f ? highlight : normal);
-    chorusOffBtn->setColour(TextButton::textColourOffId, mode <= 0.25f ? Colours::black : Colours::white);
+    chorusOffBtn->setColour(TextButton::textColourOffId, mode <= 0.25f ? Colour(0xFF0A0E14) : Colours::white);
     chorusIBtn->setColour(TextButton::buttonColourId,   (mode > 0.25f && mode <= 0.75f) ? highlight : normal);
-    chorusIBtn->setColour(TextButton::textColourOffId,  (mode > 0.25f && mode <= 0.75f) ? Colours::black : Colours::white);
+    chorusIBtn->setColour(TextButton::textColourOffId,  (mode > 0.25f && mode <= 0.75f) ? Colour(0xFF0A0E14) : Colours::white);
     chorusIIBtn->setColour(TextButton::buttonColourId,  mode > 0.75f ? highlight : normal);
-    chorusIIBtn->setColour(TextButton::textColourOffId, mode > 0.75f ? Colours::black : Colours::white);
+    chorusIIBtn->setColour(TextButton::textColourOffId, mode > 0.75f ? Colour(0xFF0A0E14) : Colours::white);
 }
 
 //==============================================================================
@@ -169,12 +169,12 @@ void DexedAudioProcessorEditor::paint (Graphics& g) {
     float stripH  = VIS_STRIP_H  * factor;
 
     // Horizontal separator lines bordering the visualizer strip
-    g.setColour(Colour(0xFF1E90FF).withAlpha(0.35f));
+    g.setColour(Colour(0xFF00B8D4).withAlpha(0.3f));
     g.drawHorizontalLine((int)stripY,        0.0f, (float)getWidth());
     g.drawHorizontalLine((int)(stripY + stripH), 0.0f, (float)getWidth());
 
     // "CHORUS" label above the buttons
-    g.setColour(Colour(0xFFFFBF00).withAlpha(0.8f));
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.8f));
     g.setFont(Font(9.5f, Font::bold));
     g.drawText("JUNO CHORUS", (int)(706 * factor), (int)stripY, (int)(160 * factor), 14, Justification::centred, false);
 }

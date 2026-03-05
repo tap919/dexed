@@ -232,11 +232,11 @@ public:
         const int w = getWidth();
         const int h = getHeight();
 
-        // Dark navy background with subtle grid
-        g.fillAll(Colour(0xFF040C16));
+        // Deep dark background
+        g.fillAll(Colour(0xFF040A12));
 
         // Horizontal center grid line
-        g.setColour(Colour(0xFF1E4080).withAlpha(0.4f));
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.25f));
         g.drawHorizontalLine(h / 2, 0.0f, (float)w);
 
         // Vertical grid lines
@@ -244,7 +244,7 @@ public:
             g.drawVerticalLine(x, 0.0f, (float)h);
 
         // Section label
-        g.setColour(Colour(0xFF1E90FF).withAlpha(0.7f));
+        g.setColour(Colour(0xFF00E5A0).withAlpha(0.7f));
         g.setFont(Font(10.0f, Font::bold));
         g.drawText("WAVEFORM", 4, 2, 70, 12, Justification::left, false);
 
@@ -264,12 +264,16 @@ public:
         }
 
         // Outer glow (thicker, more transparent)
-        g.setColour(Colour(0xFF1E90FF).withAlpha(0.18f));
-        g.strokePath(wPath, PathStrokeType(3.5f));
+        g.setColour(Colour(0xFF00E5A0).withAlpha(0.15f));
+        g.strokePath(wPath, PathStrokeType(4.0f));
+
+        // Mid glow
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.25f));
+        g.strokePath(wPath, PathStrokeType(2.0f));
 
         // Inner bright line
-        g.setColour(Colour(0xFF5AB4FF));
-        g.strokePath(wPath, PathStrokeType(1.2f));
+        g.setColour(Colour(0xFF00FFD0));
+        g.strokePath(wPath, PathStrokeType(1.0f));
     }
 
 private:

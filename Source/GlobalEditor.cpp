@@ -581,11 +581,11 @@ GlobalEditor::~GlobalEditor()
 void GlobalEditor::paint (juce::Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
-    // Futuristic dark-navy background instead of the original bitmap
-    g.fillAll(Colour(0xFF070E1A));
+    // TapSynth modern dark background
+    g.fillAll(Colour(0xFF060D17));
 
-    // Section dividers with blue glow
-    g.setColour(Colour(0xFF1E90FF).withAlpha(0.25f));
+    // Section dividers with teal glow
+    g.setColour(Colour(0xFF00B8D4).withAlpha(0.2f));
     // Horizontal separator line at top
     g.drawHorizontalLine(0, 0.0f, 864.0f);
     // Vertical section separators
@@ -594,7 +594,7 @@ void GlobalEditor::paint (juce::Graphics& g)
 
     // Section labels
     g.setFont(Font(9.5f, Font::bold));
-    g.setColour(Colour(0xFFFFBF00));  // McDonald's yellow labels
+    g.setColour(Colour(0xFF00E5A0));  // Modern teal-green labels
     g.drawText("MASTER",   2,   128, 148, 12, Justification::centred, false);
     g.drawText("FILTER",   154, 128, 176, 12, Justification::centred, false);
     g.drawText("ALGORITHM",334, 128, 160, 12, Justification::centred, false);
@@ -603,11 +603,11 @@ void GlobalEditor::paint (juce::Graphics& g)
     g.drawText("PITCH EG", 732, 128, 130, 12, Justification::centred, false);
 
     // Bottom FX strip separator
-    g.setColour(Colour(0xFF1E90FF).withAlpha(0.25f));
+    g.setColour(Colour(0xFF00B8D4).withAlpha(0.2f));
     g.drawHorizontalLine(148, 0.0f, 864.0f);
 
     // Bottom FX strip section labels
-    g.setColour(Colour(0xFFFFBF00));
+    g.setColour(Colour(0xFF00E5A0));
     g.drawText("DRIFT",    2,   207, 60,  12, Justification::centred, false);
     g.drawText("SAT",      56,  207, 60,  12, Justification::centred, false);
     g.drawText("REVERSE",  108, 207, 60,  12, Justification::centred, false);
@@ -615,7 +615,7 @@ void GlobalEditor::paint (juce::Graphics& g)
 
     // Sub-labels for EQ bands
     g.setFont(Font(8.5f));
-    g.setColour(Colour(0xFFAAAAAA));
+    g.setColour(Colour(0xFF8899AA));
     g.drawText("LOW",    200, 194, 42, 10, Justification::centred, false);
     g.drawText("L-MID",  248, 194, 42, 10, Justification::centred, false);
     g.drawText("H-MID",  296, 194, 42, 10, Justification::centred, false);
