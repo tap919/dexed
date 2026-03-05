@@ -1010,8 +1010,8 @@
 
     function downloadAll() {
         var banks = ['TapBass', 'TapAmbient', 'TapKeys', 'TapLeads', 'TapPerc'];
-        banks.forEach(function(name, i) {
-            setTimeout(function() { downloadBank(name); }, i * 400);
+        banks.forEach(function(name) {
+            downloadBank(name);
         });
     }
 
