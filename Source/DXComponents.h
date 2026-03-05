@@ -245,7 +245,8 @@ public:
         g.drawHorizontalLine(h / 2, 2.0f, (float)(w - 2));
 
         // Vertical grid lines
-        for (int x = 0; x < w; x += w / 8) {
+        const int step = jmax(1, w / 8);
+        for (int x = 0; x < w; x += step) {
             g.setColour(Colour(0xFF00B8D4).withAlpha(0.06f));
             g.drawVerticalLine(x, 2.0f, (float)(h - 2));
         }
