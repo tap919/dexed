@@ -404,7 +404,7 @@ void CtrlFloat::updateComponent() {
 void CtrlFloat::updateDisplayName() {
     if (parent == nullptr) return;
     DexedAudioProcessorEditor *editor =
-        (DexedAudioProcessorEditor *) parent->getActiveEditor();
+        dynamic_cast<DexedAudioProcessorEditor *>(parent->getActiveEditor());
     if (editor == nullptr) return;
     editor->global.setParamMessage(label + ": " + getValueDisplay());
 }
