@@ -137,6 +137,7 @@ struct OperatorCtrl {
     std::unique_ptr<CtrlDX> ampModSens;
     std::unique_ptr<CtrlDX> velModSens;
     std::unique_ptr<Ctrl> opSwitch;
+    std::unique_ptr<CtrlFloat> waveform;  // 0..1 mapped to 0..4 (sine/saw/square/triangle/noise)
 };
 
 #endif  // PLUGINPARAM_H_INCLUDED

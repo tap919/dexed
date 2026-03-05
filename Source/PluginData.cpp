@@ -370,6 +370,16 @@ void DexedAudioProcessor::getStateInformation(MemoryBlock& destData) {
     dexedState.setAttribute("eqLowMid",  fx.uiEqLowMidGain);
     dexedState.setAttribute("eqHighMid", fx.uiEqHighMidGain);
     dexedState.setAttribute("eqHigh",    fx.uiEqHighGain);
+    dexedState.setAttribute("macroWarmth",     uiMacroWarmth);
+    dexedState.setAttribute("macroBlow",       uiMacroBlow);
+    dexedState.setAttribute("macroBrightness", uiMacroBrightness);
+    dexedState.setAttribute("macroPad",        uiMacroPad);
+    dexedState.setAttribute("svfCutoff", fx.uiSvfCutoff);
+    dexedState.setAttribute("svfReso",   fx.uiSvfReso);
+    dexedState.setAttribute("svfType",   fx.uiSvfType);
+    for (int op = 0; op < 6; op++) {
+        dexedState.setAttribute(String("opWaveform") + String(op), (double)opWaveformF[op]);
+    }
     dexedState.setAttribute("currentProgram", currentProgram);
     dexedState.setAttribute("engineType", (int) engineType);
     dexedState.setAttribute("masterTune", controllers.masterTune);
@@ -444,6 +454,17 @@ void DexedAudioProcessor::setStateInformation(const void* source, int sizeInByte
     fx.uiEqLowMidGain  = (float) root->getDoubleAttribute("eqLowMid",  0.5);
     fx.uiEqHighMidGain = (float) root->getDoubleAttribute("eqHighMid", 0.5);
     fx.uiEqHighGain    = (float) root->getDoubleAttribute("eqHigh",    0.5);
+    uiMacroWarmth      = (float) root->getDoubleAttribute("macroWarmth",     0.0);
+    uiMacroBlow        = (float) root->getDoubleAttribute("macroBlow",       0.0);
+    uiMacroBrightness  = (float) root->getDoubleAttribute("macroBrightness", 0.0);
+    uiMacroPad         = (float) root->getDoubleAttribute("macroPad",        0.0);
+    fx.uiSvfCutoff = (float) root->getDoubleAttribute("svfCutoff", 1.0);
+    fx.uiSvfReso   = (float) root->getDoubleAttribute("svfReso",   0.0);
+    fx.uiSvfType   = (float) root->getDoubleAttribute("svfType",   0.0);
+    for (int op = 0; op < 6; op++) {
+        opWaveformF[op] = (float) root->getDoubleAttribute(
+            String("opWaveform") + String(op), 0.0);
+    }
     currentProgram = root->getIntAttribute("currentProgram");
     
     String opSwitchValue = root->getStringAttribute("opSwitch");

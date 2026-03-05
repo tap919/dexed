@@ -115,16 +115,16 @@ void FmCore::render(int32_t *output, FmOpParams *params, int algorithm, int32_t 
                     // cout << op << " fb " << inbus << outbus << add << endl;
                     FmOpKernel::compute_fb(outptr, param.phase, param.freq,
                                            gain1, gain2,
-                                           fb_buf, feedback_shift, add);
+                                           fb_buf, feedback_shift, add, param.waveform);
                 } else {
                     // cout << op << " pure " << inbus << outbus << add << endl;
                     FmOpKernel::compute_pure(outptr, param.phase, param.freq,
-                                             gain1, gain2, add);
+                                             gain1, gain2, add, param.waveform);
                 }
             } else {
                 // cout << op << " normal " << inbus << outbus << " " << param.freq << add << endl;
                 FmOpKernel::compute(outptr, buf_[inbus - 1].get(),
-                                    param.phase, param.freq, gain1, gain2, add);
+                                    param.phase, param.freq, gain1, gain2, add, param.waveform);
             }
             has_contents[outbus] = true;
         } else if (!add) {

@@ -77,6 +77,13 @@ class PluginFx {
     float dc_od;
     float dc_r;
 
+    // SVF (State-Variable Filter) state
+    float svfBP, svfLP;
+    float svfBPR, svfLPR;
+    float pSvfCutoff, pSvfReso;
+    float svfF, svfQ;
+    void  updateSvfCoeffs();
+
     // Juno-style BBD chorus
     static const int CHORUS_DELAY_LEN = 8192;
     float chorusBufL[CHORUS_DELAY_LEN];
@@ -122,6 +129,11 @@ public:
     float uiEqLowMidGain;
     float uiEqHighMidGain;
     float uiEqHighGain;
+
+    // State-Variable Filter (SVF)
+    float uiSvfCutoff;
+    float uiSvfReso;
+    float uiSvfType;
 
     void init(int sampleRate);
     // Stereo-aware process: left[] is filtered in-place, right[] gets chorus-widened output

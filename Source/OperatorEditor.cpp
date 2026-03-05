@@ -289,6 +289,16 @@ OperatorEditor::OperatorEditor ()
     opSwitch.reset(new OperatorSwitch());
     opSwitch->addListener(this);
     addAndMakeVisible(opSwitch.get());
+
+    waveformCombo.reset(new juce::ComboBox("waveformCombo"));
+    addAndMakeVisible(waveformCombo.get());
+    waveformCombo->addItem("SINE",   1);
+    waveformCombo->addItem("SAW",    2);
+    waveformCombo->addItem("SQUARE", 3);
+    waveformCombo->addItem("TRI",    4);
+    waveformCombo->addItem("NOISE",  5);
+    waveformCombo->setSelectedId(1, dontSendNotification);
+    waveformCombo->setBounds(150, 185, 75, 22);
     //[/UserPreSize]
 
     setSize (287, 218);
@@ -354,6 +364,7 @@ OperatorEditor::~OperatorEditor()
 
     //[Destructor]. You can add your own custom destruction code here..
     opSwitch = nullptr;
+    waveformCombo = nullptr;
     //[/Destructor]
 }
 
@@ -438,6 +449,11 @@ void OperatorEditor::paint (juce::Graphics& g)
     g.setColour(Colour(0xFF8899AA));
     g.drawText("RATIO", 115, 34, 30, 10, Justification::centred, false);
     g.drawText("FIXED", 186, 34, 30, 10, Justification::centred, false);
+
+    // Waveform label
+    g.setFont(Font(8.5f));
+    g.setColour(Colour(0xFF8899AA));
+    g.drawText("WAVE", 150, 175, 75, 12, Justification::centred, false);
     //[/UserPaint]
 }
 
@@ -605,6 +621,7 @@ void OperatorEditor::bind(DexedAudioProcessor *parent, int op) {
     parent->opCtrl[op].ampModSens->bind(ampModSens.get());
     parent->opCtrl[op].velModSens->bind(keyVelSens.get());
     parent->opCtrl[op].opSwitch->bind(opSwitch.get());
+    parent->opCtrl[op].waveform->bind(waveformCombo.get());
 
     int offset = parent->opCtrl[op].egRate[0]->getOffset();
     envDisplay->pvalues = &(parent->data[offset]);

@@ -17,6 +17,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <algorithm>
 #include "synth.h"
 #include "freqlut.h"
 #include "exp2.h"
@@ -157,6 +158,7 @@ Dx7Note::Dx7Note(std::shared_ptr<TuningState> ts, MTSClient *mtsc)
     for(int op=0;op<6;op++) {
         params_[op].phase = 0;
         params_[op].gain_out = 0;
+        params_[op].waveform = 0;
     }
 }
 
@@ -295,6 +297,7 @@ void Dx7Note::compute(int32_t *buf, int32_t lfo_val, int32_t lfo_delay, const Co
         if ( ctrls->opSwitch[op] == '0' )  {
             env_[op].getsample(); // advance the envelop even if it is not playing
             params_[op].level_in = 0;
+            params_[op].waveform = 0;
         } else {
             int32_t basepitch = basepitch_[op];
 
@@ -331,9 +334,18 @@ void Dx7Note::compute(int32_t *buf, int32_t lfo_val, int32_t lfo_delay, const Co
                 level -= ldiff;
             }
             params_[op].level_in = level;
+            params_[op].waveform = ctrls->opWaveform[op];
         }
     }
-    ctrls->core->render(buf, params_, algorithm_, fb_buf_, fb_shift_);
+    // Apply blow macro (additional feedback)
+    int32_t effective_fb_shift = fb_shift_;
+    if (ctrls->blowMacro > 0.f) {
+        int base_feedback = (fb_shift_ < 16) ? (FEEDBACK_BITDEPTH - fb_shift_) : 0;
+        int extra_feedback = (int)(ctrls->blowMacro * 7.0f + 0.5f);
+        int new_feedback = std::min(7, base_feedback + extra_feedback);
+        effective_fb_shift = new_feedback != 0 ? FEEDBACK_BITDEPTH - new_feedback : 16;
+    }
+    ctrls->core->render(buf, params_, algorithm_, fb_buf_, effective_fb_shift);
 }
 
 void Dx7Note::keyup() {
