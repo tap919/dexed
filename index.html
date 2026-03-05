@@ -552,6 +552,18 @@
         .anim-d3 { animation-delay: .3s; }
         .anim-d4 { animation-delay: .4s; }
         .anim-d5 { animation-delay: .5s; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .anim,
+            .anim-d1,
+            .anim-d2,
+            .anim-d3,
+            .anim-d4,
+            .anim-d5 {
+                animation: none !important;
+                animation-delay: 0s !important;
+            }
+        }
     </style>
 </head>
 <body>
