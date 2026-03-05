@@ -197,6 +197,9 @@ public :
     void loadCartridge(Cartridge &cart);
     void setDxValue(int offset, int v);
 
+    /** Load one of the 3 stock banks (0=Analog Classics, 1=Digital Textures, 2=Ambient Pads). */
+    bool loadStockBank(int bankIndex);
+
     //==============================================================================
     DexedAudioProcessor();
     ~DexedAudioProcessor();

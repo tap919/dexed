@@ -222,6 +222,41 @@ void DexedAudioProcessor::setupStartupCart() {
     delete builtin_pgm;
 }
 
+bool DexedAudioProcessor::loadStockBank(int bankIndex) {
+    // Stock bank file names from the built-in zip:
+    //   0 = "Analog Classics"  → Dexed_01.syx
+    //   1 = "Digital Textures" → SynprezFM_01.syx
+    //   2 = "Ambient Pads"    → SynprezFM_02.syx
+    static const char* bankFiles[] = {
+        "Dexed_01.syx",
+        "SynprezFM_01.syx",
+        "SynprezFM_02.syx"
+    };
+
+    if (bankIndex < 0 || bankIndex > 2)
+        return false;
+
+    MemoryInputStream *mis = new MemoryInputStream(BinaryData::builtin_pgm_zip, BinaryData::builtin_pgm_zipSize, false);
+    ZipFile *builtin_pgm = new ZipFile(mis, true);
+    int idx = builtin_pgm->getIndexOfFileName(bankFiles[bankIndex]);
+    if (idx < 0) {
+        delete builtin_pgm;
+        return false;
+    }
+    InputStream *is = builtin_pgm->createStreamForEntry(idx);
+    Cartridge bank;
+    bool ok = (bank.load(*is) != -1);
+    delete is;
+    delete builtin_pgm;
+
+    if (ok) {
+        loadCartridge(bank);
+        setCurrentProgram(0);
+        triggerAsyncUpdate();
+    }
+    return ok;
+}
+
 void DexedAudioProcessor::resetToInitVoice() {
     const char init_voice[] =
       { 99, 99, 99, 99, 99, 99, 99, 00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 7,

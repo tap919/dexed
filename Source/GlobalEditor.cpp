@@ -497,6 +497,24 @@ GlobalEditor::GlobalEditor ()
     eqHigh->setDoubleClickReturnValue(true, 0.5);
     eqHigh->setBounds(354, 154, 34, 34);
 
+    // Stock bank selector
+    bankSelector.reset(new juce::ComboBox("bankSelector"));
+    addAndMakeVisible(bankSelector.get());
+    bankSelector->addItem("Analog Classics", 1);
+    bankSelector->addItem("Digital Textures", 2);
+    bankSelector->addItem("Ambient Pads", 3);
+    bankSelector->setSelectedId(1, dontSendNotification);
+    bankSelector->setTitle("Stock Bank");
+    bankSelector->setBounds(430, 158, 150, 24);
+    bankSelector->onChange = [this] {
+        int bankIdx = bankSelector->getSelectedId() - 1;
+        if (processor != nullptr && bankIdx >= 0 && bankIdx <= 2) {
+            processor->loadStockBank(bankIdx);
+            editor->rebuildProgramCombobox();
+            editor->updateUI();
+        }
+    };
+
 
     //[UserPreSize]
     //[/UserPreSize]
@@ -571,6 +589,7 @@ GlobalEditor::~GlobalEditor()
     eqLowMid = nullptr;
     eqHighMid = nullptr;
     eqHigh = nullptr;
+    bankSelector = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
@@ -612,6 +631,7 @@ void GlobalEditor::paint (juce::Graphics& g)
     g.drawText("SAT",      56,  207, 60,  12, Justification::centred, false);
     g.drawText("REVERSE",  108, 207, 60,  12, Justification::centred, false);
     g.drawText("4-BAND EQ",190, 207, 210, 12, Justification::centred, false);
+    g.drawText("STOCK BANK",420, 207, 170, 12, Justification::centred, false);
 
     // Sub-labels for EQ bands
     g.setFont(Font(8.5f));
