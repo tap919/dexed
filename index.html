@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TapSynth – Professional FM Sound Design</title>
+    <style>
+        /* ── Reset & Base ─────────────────────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:        #0f172a;
+            --bg-card:   #1e293b;
+            --bg-card-h: #253347;
+            --accent:    #38bdf8;
+            --accent2:   #0ea5e9;
+            --text:      #e2e8f0;
+            --text-dim:  #94a3b8;
+            --border:    #334155;
+            --cat-bass:  #f87171;
+            --cat-pad:   #60a5fa;
+            --cat-lead:  #facc15;
+            --cat-keys:  #a78bfa;
+            --cat-perc:  #fb923c;
+            --cat-fx:    #34d399;
+            --cat-str:   #f472b6;
+            --cat-brs:   #fbbf24;
+            --radius:    12px;
+            --glow:      0 0 24px rgba(56,189,248,.35);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ── Animated grid background ─────────────────────────── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(56,189,248,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56,189,248,.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Floating gradient orbs ───────────────────────────── */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: .18;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .orb--1 { width: 500px; height: 500px; background: var(--accent); top: -120px; left: -100px; }
+        .orb--2 { width: 400px; height: 400px; background: var(--accent2); bottom: -80px; right: -60px; }
+        .orb--3 { width: 300px; height: 300px; background: #7c3aed; top: 40%; left: 60%; }
+
+        /* ── Layout helpers ────────────────────────────────────── */
+        .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+        .section   { padding: 56px 0; }
+
+        /* ── Section divider ──────────────────────────────────── */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0 auto;
+            max-width: 720px;
+            padding: 8px 0;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+        .divider__icon {
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           HEADER
+        ═══════════════════════════════════════════════════════ */
+        .header {
+            text-align: center;
+            padding: 80px 0 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle waveform SVG in background */
+        .header__wave {
+            position: absolute;
+            inset: 0;
+            opacity: .06;
+            pointer-events: none;
+        }
+        .header__wave svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .header__logo {
+            font-size: clamp(2.8rem, 6vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+        .header__logo .tap {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header__logo .synth {
+            color: #fff;
+            text-shadow: 0 0 40px rgba(56,189,248,.3);
+        }
+
+        .header__tagline {
+            font-size: 1.15rem;
+            color: var(--text-dim);
+            margin-top: 8px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header__count {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding: 10px 28px;
+            background: rgba(56,189,248,.08);
+            border: 1px solid rgba(56,189,248,.2);
+            border-radius: 999px;
+            font-size: .95rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .header__count svg { flex-shrink: 0; }
+
+        /* ═══════════════════════════════════════════════════════
+           BANK CARDS
+        ═══════════════════════════════════════════════════════ */
+        .banks__heading {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 36px;
+        }
+
+        .banks__grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .bank-card {
+            position: relative;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px 24px;
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .bank-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: var(--glow);
+        }
+
+        /* top row: icon + name */
+        .bank-card__top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .bank-card__icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .bank-card__name {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .bank-card__name .tap {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .bank-card__desc {
+            font-size: .88rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* patch count badge */
+        .bank-card__badge {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(56,189,248,.12);
+            color: var(--accent);
+            font-size: .75rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 999px;
+            letter-spacing: .5px;
+        }
+
+        /* download btn */
+        .bank-card__dl {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
+            padding: 10px 0;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #0f172a;
+            font-weight: 700;
+            font-size: .92rem;
+            cursor: pointer;
+            transition: opacity .2s, box-shadow .2s;
+        }
+        .bank-card__dl:hover {
+            opacity: .9;
+            box-shadow: 0 0 18px rgba(56,189,248,.45);
+        }
+        .bank-card__dl svg { flex-shrink: 0; }
+
+        /* icon background colours per bank */
+        .bank-card--bass .bank-card__icon   { background: rgba(248,113,113,.15); color: var(--cat-bass); }
+        .bank-card--ambient .bank-card__icon { background: rgba(96,165,250,.15); color: var(--cat-pad); }
+        .bank-card--keys .bank-card__icon   { background: rgba(167,139,250,.15); color: var(--cat-keys); }
+        .bank-card--leads .bank-card__icon  { background: rgba(250,204,21,.15); color: var(--cat-lead); }
+        .bank-card--perc .bank-card__icon   { background: rgba(251,146,60,.15); color: var(--cat-perc); }
+
+        /* ═══════════════════════════════════════════════════════
+           PATCH PREVIEW
+        ═══════════════════════════════════════════════════════ */
+        .patches__heading {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .patches__sub {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: .92rem;
+            margin-bottom: 28px;
+        }
+
+        /* category filter pills */
+        .cat-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .cat-pill {
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            font-size: .82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .cat-pill:hover,
+        .cat-pill.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(56,189,248,.08);
+        }
+
+        .patch-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .patch-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: .8rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            transition: border-color .2s, background .2s;
+            cursor: default;
+        }
+        .patch-pill:hover { border-color: var(--accent); background: var(--bg-card-h); }
+        .patch-pill__dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* colour dots per category */
+        .patch-pill[data-cat="bass"]   .patch-pill__dot { background: var(--cat-bass); }
+        .patch-pill[data-cat="pad"]    .patch-pill__dot { background: var(--cat-pad); }
+        .patch-pill[data-cat="lead"]   .patch-pill__dot { background: var(--cat-lead); }
+        .patch-pill[data-cat="keys"]   .patch-pill__dot { background: var(--cat-keys); }
+        .patch-pill[data-cat="perc"]   .patch-pill__dot { background: var(--cat-perc); }
+        .patch-pill[data-cat="fx"]     .patch-pill__dot { background: var(--cat-fx); }
+        .patch-pill[data-cat="string"] .patch-pill__dot { background: var(--cat-str); }
+        .patch-pill[data-cat="brass"]  .patch-pill__dot { background: var(--cat-brs); }
+
+        /* expand / collapse */
+        .patch-toggle {
+            display: flex;
+            justify-content: center;
+            margin-top: 18px;
+        }
+        .patch-toggle button {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 8px 22px;
+            border-radius: 999px;
+            font-size: .85rem;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .patch-toggle button:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* collapsed state hides patches beyond the first 12 */
+        .patch-grid.collapsed .patch-pill:nth-child(n+13) { display: none; }
+
+        /* ═══════════════════════════════════════════════════════
+           HERO DOWNLOAD SECTION
+        ═══════════════════════════════════════════════════════ */
+        .dl-hero {
+            text-align: center;
+            padding: 56px 0;
+        }
+        .dl-hero__icons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .dl-hero__thumb {
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 22px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            transition: border-color .3s;
+        }
+        .dl-hero__thumb:hover { border-color: var(--accent); }
+
+        .dl-hero__btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 18px 48px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #0f172a;
+            cursor: pointer;
+            box-shadow: 0 0 32px rgba(56,189,248,.35);
+            transition: transform .2s, box-shadow .2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .dl-hero__btn:hover {
+            transform: scale(1.04);
+            box-shadow: 0 0 48px rgba(56,189,248,.55);
+        }
+        .dl-hero__btn svg { flex-shrink: 0; }
+
+        .dl-hero__meta {
+            margin-top: 14px;
+            font-size: .88rem;
+            color: var(--text-dim);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           INFO BOX
+        ═══════════════════════════════════════════════════════ */
+        .info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .info__panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+        }
+        .info__panel h3 {
+            font-size: 1.1rem;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info__panel h3 svg { color: var(--accent); flex-shrink: 0; }
+
+        /* Compatibility badges */
+        .compat-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .compat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(56,189,248,.05);
+            font-size: .85rem;
+            font-weight: 600;
+            transition: border-color .2s;
+        }
+        .compat-badge:hover { border-color: var(--accent); }
+        .compat-badge svg { color: var(--accent); flex-shrink: 0; }
+
+        /* Quick start steps */
+        .steps { list-style: none; counter-reset: step; }
+        .steps li {
+            counter-increment: step;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 16px;
+            font-size: .92rem;
+            color: var(--text-dim);
+        }
+        .steps li::before {
+            content: counter(step);
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #0f172a;
+            font-weight: 800;
+            font-size: .85rem;
+            display: grid;
+            place-items: center;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           FOOTER
+        ═══════════════════════════════════════════════════════ */
+        .footer {
+            text-align: center;
+            padding: 48px 0 36px;
+            color: var(--text-dim);
+            font-size: .88rem;
+        }
+        .footer__brand {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+        .footer__brand .tap {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .footer__tagline { margin-bottom: 10px; }
+        .footer__version {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            font-size: .75rem;
+            color: var(--text-dim);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .header { padding: 56px 0 36px; }
+            .banks__grid { grid-template-columns: 1fr; }
+            .info { grid-template-columns: 1fr; }
+            .dl-hero__btn { padding: 16px 32px; font-size: 1rem; }
+            .dl-hero__icons { gap: 8px; }
+            .dl-hero__thumb { width: 44px; height: 44px; font-size: 18px; }
+            .bank-card__dl { padding: 12px 0; font-size: .95rem; }
+            .patch-grid.collapsed .patch-pill:nth-child(n+9) { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            .header__logo { font-size: 2.4rem; }
+            .header__tagline { font-size: .9rem; letter-spacing: 1px; }
+            .dl-hero__btn { padding: 14px 24px; font-size: .92rem; }
+        }
+
+        /* ── Animations ───────────────────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .anim { animation: fadeUp .5s ease both; }
+        .anim-d1 { animation-delay: .1s; }
+        .anim-d2 { animation-delay: .2s; }
+        .anim-d3 { animation-delay: .3s; }
+        .anim-d4 { animation-delay: .4s; }
+        .anim-d5 { animation-delay: .5s; }
+    </style>
+</head>
+<body>
+
+<!-- floating gradient orbs -->
+<div class="orb orb--1" aria-hidden="true"></div>
+<div class="orb orb--2" aria-hidden="true"></div>
+<div class="orb orb--3" aria-hidden="true"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════════════ -->
+<header class="header section">
+    <!-- FM waveform background graphic -->
+    <div class="header__wave" aria-hidden="true">
+        <svg viewBox="0 0 1200 320" preserveAspectRatio="none">
+            <path d="M0 160 Q50 80,100 160 T200 160 T300 160 T400 160 T500 160 T600 160 T700 160 T800 160 T900 160 T1000 160 T1100 160 T1200 160"
+                  fill="none" stroke="#38bdf8" stroke-width="2"/>
+            <path d="M0 160 Q75 40,150 160 T300 160 T450 160 T600 160 T750 160 T900 160 T1050 160 T1200 160"
+                  fill="none" stroke="#0ea5e9" stroke-width="1.5"/>
+            <path d="M0 180 Q60 100,120 180 T240 180 T360 180 T480 180 T600 180 T720 180 T840 180 T960 180 T1080 180 T1200 180"
+                  fill="none" stroke="#38bdf8" stroke-width="1" opacity=".5"/>
+        </svg>
+    </div>
+
+    <div class="container">
+        <h1 class="header__logo anim">
+            <span class="tap">Tap</span><span class="synth">Synth</span>
+        </h1>
+        <p class="header__tagline anim anim-d1">Professional FM Sound Design</p>
+        <div class="header__count anim anim-d2">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            160 Patches · 5 Banks
+        </div>
+    </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════════
+     BANK CARDS
+════════════════════════════════════════════════════════════ -->
+<section class="section" id="banks">
+    <div class="container">
+        <div class="divider"><span class="divider__icon">&#9881;</span></div>
+        <h2 class="banks__heading anim">Sound Banks</h2>
+
+        <div class="banks__grid">
+            <!-- Bank 1 – Bass -->
+            <div class="bank-card bank-card--bass anim anim-d1">
+                <span class="bank-card__badge">32 patches</span>
+                <div class="bank-card__top">
+                    <div class="bank-card__icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 16l5-5 4 4 5-7 6 8"/></svg>
+                    </div>
+                    <div>
+                        <div class="bank-card__name"><span class="tap">Tap</span>Bass</div>
+                    </div>
+                </div>
+                <p class="bank-card__desc">Heavy sub-basses, growling FM lows, and punchy 808-style tones built for modern production.</p>
+                <button class="bank-card__dl" onclick="downloadBank('TapBass')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download Bank
+                </button>
+            </div>
+
+            <!-- Bank 2 – Ambient -->
+            <div class="bank-card bank-card--ambient anim anim-d2">
+                <span class="bank-card__badge">32 patches</span>
+                <div class="bank-card__top">
+                    <div class="bank-card__icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z"/></svg>
+                    </div>
+                    <div>
+                        <div class="bank-card__name"><span class="tap">Tap</span>Ambient</div>
+                    </div>
+                </div>
+                <p class="bank-card__desc">Evolving pads, ethereal textures, and lush atmospheres for cinematic and ambient works.</p>
+                <button class="bank-card__dl" onclick="downloadBank('TapAmbient')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download Bank
+                </button>
+            </div>
+
+            <!-- Bank 3 – Keys -->
+            <div class="bank-card bank-card--keys anim anim-d3">
+                <span class="bank-card__badge">32 patches</span>
+                <div class="bank-card__top">
+                    <div class="bank-card__icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="4" x2="6" y2="20"/><line x1="10" y1="4" x2="10" y2="20"/><line x1="14" y1="4" x2="14" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/></svg>
+                    </div>
+                    <div>
+                        <div class="bank-card__name"><span class="tap">Tap</span>Keys</div>
+                    </div>
+                </div>
+                <p class="bank-card__desc">Classic electric pianos, FM rhodes, bell-like tines, and warm vintage keyboard tones.</p>
+                <button class="bank-card__dl" onclick="downloadBank('TapKeys')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download Bank
+                </button>
+            </div>
+
+            <!-- Bank 4 – Leads -->
+            <div class="bank-card bank-card--leads anim anim-d4">
+                <span class="bank-card__badge">32 patches</span>
+                <div class="bank-card__top">
+                    <div class="bank-card__icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
+                    <div>
+                        <div class="bank-card__name"><span class="tap">Tap</span>Leads</div>
+                    </div>
+                </div>
+                <p class="bank-card__desc">Cutting synth leads, screaming solos, and bright melodic lines that slice through any mix.</p>
+                <button class="bank-card__dl" onclick="downloadBank('TapLeads')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download Bank
+                </button>
+            </div>
+
+            <!-- Bank 5 – Percussion -->
+            <div class="bank-card bank-card--perc anim anim-d5">
+                <span class="bank-card__badge">32 patches</span>
+                <div class="bank-card__top">
+                    <div class="bank-card__icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <div>
+                        <div class="bank-card__name"><span class="tap">Tap</span>Perc</div>
+                    </div>
+                </div>
+                <p class="bank-card__desc">FM drums, metallic hits, digital claps, and unique percussion textures for rhythmic layers.</p>
+                <button class="bank-card__dl" onclick="downloadBank('TapPerc')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download Bank
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     PATCH PREVIEW
+════════════════════════════════════════════════════════════ -->
+<section class="section" id="patches">
+    <div class="container">
+        <div class="divider"><span class="divider__icon">&#9835;</span></div>
+        <h2 class="patches__heading anim">Patch Preview</h2>
+        <p class="patches__sub anim anim-d1">Explore a selection of sounds from the collection</p>
+
+        <!-- category filter pills -->
+        <div class="cat-filters anim anim-d2" id="catFilters">
+            <button class="cat-pill active" data-cat="all">All</button>
+            <button class="cat-pill" data-cat="bass">Bass</button>
+            <button class="cat-pill" data-cat="pad">Pad</button>
+            <button class="cat-pill" data-cat="lead">Lead</button>
+            <button class="cat-pill" data-cat="keys">Keys</button>
+            <button class="cat-pill" data-cat="perc">Perc</button>
+            <button class="cat-pill" data-cat="fx">FX</button>
+            <button class="cat-pill" data-cat="string">String</button>
+            <button class="cat-pill" data-cat="brass">Brass</button>
+        </div>
+
+        <!-- patch pills -->
+        <div class="patch-grid collapsed anim anim-d3" id="patchGrid">
+            <!-- populated by JS -->
+        </div>
+
+        <div class="patch-toggle anim anim-d4">
+            <button id="patchToggleBtn" onclick="togglePatches()">Show all patches ▾</button>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     DOWNLOAD ALL – HERO BUTTON
+════════════════════════════════════════════════════════════ -->
+<section class="dl-hero section" id="download">
+    <div class="container">
+        <div class="divider"><span class="divider__icon">⬇</span></div>
+
+        <div class="dl-hero__icons anim">
+            <div class="dl-hero__thumb" title="TapBass">🎸</div>
+            <div class="dl-hero__thumb" title="TapAmbient">🌊</div>
+            <div class="dl-hero__thumb" title="TapKeys">🎹</div>
+            <div class="dl-hero__thumb" title="TapLeads">⚡</div>
+            <div class="dl-hero__thumb" title="TapPerc">🥁</div>
+        </div>
+
+        <button class="dl-hero__btn anim anim-d1" onclick="downloadAll()">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download All Banks
+        </button>
+
+        <p class="dl-hero__meta anim anim-d2">5 SYX banks · ~20 KB total · DX7 compatible</p>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     INFO BOX
+════════════════════════════════════════════════════════════ -->
+<section class="section" id="info">
+    <div class="container">
+        <div class="divider"><span class="divider__icon">ℹ</span></div>
+
+        <div class="info anim">
+            <!-- Compatibility panel -->
+            <div class="info__panel">
+                <h3>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Compatibility
+                </h3>
+                <div class="compat-badges">
+                    <span class="compat-badge">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        Dexed Plugin
+                    </span>
+                    <span class="compat-badge">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/></svg>
+                        Yamaha DX7
+                    </span>
+                    <span class="compat-badge">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        FM Synthesis
+                    </span>
+                    <span class="compat-badge">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        .SYX Format
+                    </span>
+                </div>
+            </div>
+
+            <!-- Quick Start panel -->
+            <div class="info__panel">
+                <h3>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Quick Start
+                </h3>
+                <ol class="steps">
+                    <li>Download a bank or grab all five at once</li>
+                    <li>Open Dexed and click the <strong>Cart</strong> (cartridge) button</li>
+                    <li>Drag the <strong>.syx</strong> file into the cartridge manager</li>
+                    <li>Browse patches and start playing!</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════════ -->
+<footer class="footer section">
+    <div class="container">
+        <div class="divider"><span class="divider__icon">♪</span></div>
+        <p class="footer__brand"><span class="tap">Tap</span>Synth</p>
+        <p class="footer__tagline">Built for Producers</p>
+        <span class="footer__version">v1.0</span>
+    </div>
+</footer>
+
+<!-- ════════════════════════════════════════════════════════════
+     JAVASCRIPT  (functional logic – do not modify)
+════════════════════════════════════════════════════════════ -->
+<script>
+    /* ── Patch data ───────────────────────────────────────── */
+    var PATCHES = [
+        { name: "Sub Rumble",    cat: "bass"   },
+        { name: "Deep Tone",     cat: "bass"   },
+        { name: "FM Growl",      cat: "bass"   },
+        { name: "808 Sine",      cat: "bass"   },
+        { name: "Warm Sub",      cat: "bass"   },
+        { name: "Acid Bass",     cat: "bass"   },
+        { name: "Etherea",       cat: "pad"    },
+        { name: "Slow Clouds",   cat: "pad"    },
+        { name: "Crystal Wash",  cat: "pad"    },
+        { name: "Drift",         cat: "pad"    },
+        { name: "Horizon",       cat: "pad"    },
+        { name: "Night Haze",    cat: "pad"    },
+        { name: "FM Rhodes",     cat: "keys"   },
+        { name: "Glassy Tine",   cat: "keys"   },
+        { name: "Vintage EP",    cat: "keys"   },
+        { name: "Bell Piano",    cat: "keys"   },
+        { name: "Bright Keys",   cat: "keys"   },
+        { name: "Neon Lead",     cat: "lead"   },
+        { name: "Saw Scream",    cat: "lead"   },
+        { name: "Pluck Lead",    cat: "lead"   },
+        { name: "Sync Bite",     cat: "lead"   },
+        { name: "FM Whistle",    cat: "lead"   },
+        { name: "Kick FM",       cat: "perc"   },
+        { name: "Metal Hit",     cat: "perc"   },
+        { name: "Digi Clap",     cat: "perc"   },
+        { name: "Hat Noise",     cat: "perc"   },
+        { name: "Tube Bell",     cat: "fx"     },
+        { name: "Shimmer",       cat: "fx"     },
+        { name: "Glitch Rise",   cat: "fx"     },
+        { name: "Celeste Str",   cat: "string" },
+        { name: "Syn Strings",   cat: "string" },
+        { name: "FM Brass",      cat: "brass"  },
+        { name: "Tromba",        cat: "brass"  }
+    ];
+
+    /* ── Render patch pills ───────────────────────────────── */
+    function renderPatches(filter) {
+        var grid = document.getElementById('patchGrid');
+        grid.innerHTML = '';
+        var list = filter === 'all' ? PATCHES : PATCHES.filter(function(p) { return p.cat === filter; });
+        list.forEach(function(p) {
+            var el = document.createElement('span');
+            el.className = 'patch-pill';
+            el.setAttribute('data-cat', p.cat);
+            el.innerHTML = '<span class="patch-pill__dot"></span>' + p.name;
+            grid.appendChild(el);
+        });
+    }
+
+    /* ── Category filter ──────────────────────────────────── */
+    document.getElementById('catFilters').addEventListener('click', function(e) {
+        if (!e.target.classList.contains('cat-pill')) return;
+        var pills = this.querySelectorAll('.cat-pill');
+        pills.forEach(function(p) { p.classList.remove('active'); });
+        e.target.classList.add('active');
+        renderPatches(e.target.getAttribute('data-cat'));
+    });
+
+    /* ── Toggle collapsed / expanded ──────────────────────── */
+    function togglePatches() {
+        var grid = document.getElementById('patchGrid');
+        var btn  = document.getElementById('patchToggleBtn');
+        if (grid.classList.contains('collapsed')) {
+            grid.classList.remove('collapsed');
+            btn.textContent = 'Show fewer ▴';
+        } else {
+            grid.classList.add('collapsed');
+            btn.textContent = 'Show all patches ▾';
+        }
+    }
+
+    /* ── Download helpers (generate placeholder SYX) ──────── */
+    function generateSyx(bankName) {
+        // DX7 cartridge SYX = 4104 bytes: F0 43 00 09 20 00 [4096 voice data] checksum F7
+        var data = new Uint8Array(4104);
+        data[0] = 0xF0; // SysEx start
+        data[1] = 0x43; // Yamaha ID
+        data[2] = 0x00; // Channel
+        data[3] = 0x09; // Format = 32-voice bulk dump
+        data[4] = 0x20; // Byte count MSB
+        data[5] = 0x00; // Byte count LSB
+
+        // Fill 32 voices (128 bytes each = 4096 bytes) with init voice data
+        for (var v = 0; v < 32; v++) {
+            var offset = 6 + v * 128;
+            // Operator rates/levels defaults
+            for (var op = 0; op < 6; op++) {
+                var opOff = offset + op * 17;
+                data[opOff]      = 99; // EG Rate 1
+                data[opOff + 1]  = 99; // EG Rate 2
+                data[opOff + 2]  = 99; // EG Rate 3
+                data[opOff + 3]  = 99; // EG Rate 4
+                data[opOff + 4]  = 99; // EG Level 1
+                data[opOff + 5]  = 99; // EG Level 2
+                data[opOff + 6]  = 99; // EG Level 3
+                data[opOff + 7]  =  0; // EG Level 4
+                data[opOff + 8]  = 39; // KB Level Scaling Break Point
+                data[opOff + 9]  =  0; // Left Depth
+                data[opOff + 10] =  0; // Right Depth
+                data[opOff + 11] =  0; // Left Curve | Right Curve
+                data[opOff + 12] =  3; // Osc Rate Scale | Detune
+                data[opOff + 13] =  0; // Amp Mod Sens | Key Vel Sens
+                data[opOff + 14] = 99; // Output Level
+                data[opOff + 15] =  0; // Osc Mode | Freq Coarse
+                data[opOff + 16] =  0; // Freq Fine
+            }
+            // Pitch EG
+            var pitchOff = offset + 102;
+            data[pitchOff]     = 50;
+            data[pitchOff + 1] = 50;
+            data[pitchOff + 2] = 50;
+            data[pitchOff + 3] = 50;
+            data[pitchOff + 4] = 50;
+            data[pitchOff + 5] = 50;
+            data[pitchOff + 6] = 50;
+            data[pitchOff + 7] = 50;
+            // Algorithm, feedback, osc sync
+            data[offset + 110] = 0; // Algorithm (0-31)
+            data[offset + 111] = 0; // Feedback | Osc Key Sync
+            // LFO
+            data[offset + 112] = 35; // LFO Speed
+            data[offset + 113] =  0; // LFO Delay
+            data[offset + 114] =  0; // LFO Pitch Mod Depth
+            data[offset + 115] =  0; // LFO Amp Mod Depth
+            data[offset + 116] =  1; // LFO Sync | Wave | Pitch Mod Sens
+            data[offset + 117] = 24; // Transpose
+            // Patch name (10 ASCII chars)
+            var nameStr = (bankName + ' ' + (v + 1)).substring(0, 10);
+            while (nameStr.length < 10) nameStr += ' ';
+            for (var c = 0; c < 10; c++) {
+                data[offset + 118 + c] = nameStr.charCodeAt(c);
+            }
+        }
+        // Checksum
+        var checksum = 0;
+        for (var i = 6; i < 4102; i++) checksum += data[i];
+        data[4102] = (~checksum + 1) & 0x7F;
+        data[4103] = 0xF7; // SysEx end
+        return data;
+    }
+
+    function triggerDownload(data, filename) {
+        var blob = new Blob([data], { type: 'application/octet-stream' });
+        var url  = URL.createObjectURL(blob);
+        var a    = document.createElement('a');
+        a.href     = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function downloadBank(bankName) {
+        var data = generateSyx(bankName);
+        triggerDownload(data, bankName + '.syx');
+    }
+
+    function downloadAll() {
+        var banks = ['TapBass', 'TapAmbient', 'TapKeys', 'TapLeads', 'TapPerc'];
+        banks.forEach(function(name, i) {
+            setTimeout(function() { downloadBank(name); }, i * 400);
+        });
+    }
+
+    /* ── Init ──────────────────────────────────────────────── */
+    renderPatches('all');
+</script>
+</body>
+</html>
