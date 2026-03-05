@@ -232,23 +232,31 @@ public:
         const int w = getWidth();
         const int h = getHeight();
 
-        // Dark navy background with subtle grid
-        g.fillAll(Colour(0xFF040C16));
+        // Deep dark background with rounded rect
+        g.setColour(Colour(0xFF030810));
+        g.fillRoundedRectangle(0.0f, 0.0f, (float)w, (float)h, 3.0f);
+
+        // Subtle border
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.1f));
+        g.drawRoundedRectangle(0.0f, 0.0f, (float)w, (float)h, 3.0f, 0.5f);
 
         // Horizontal center grid line
-        g.setColour(Colour(0xFF1E4080).withAlpha(0.4f));
-        g.drawHorizontalLine(h / 2, 0.0f, (float)w);
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.12f));
+        g.drawHorizontalLine(h / 2, 2.0f, (float)(w - 2));
 
         // Vertical grid lines
-        for (int x = 0; x < w; x += w / 8)
-            g.drawVerticalLine(x, 0.0f, (float)h);
+        const int step = jmax(1, w / 8);
+        for (int x = 0; x < w; x += step) {
+            g.setColour(Colour(0xFF00B8D4).withAlpha(0.06f));
+            g.drawVerticalLine(x, 2.0f, (float)(h - 2));
+        }
 
         // Section label
-        g.setColour(Colour(0xFF1E90FF).withAlpha(0.7f));
-        g.setFont(Font(10.0f, Font::bold));
-        g.drawText("WAVEFORM", 4, 2, 70, 12, Justification::left, false);
+        g.setColour(Colour(0xFF00E5A0).withAlpha(0.5f));
+        g.setFont(Font(9.0f, Font::bold));
+        g.drawText("WAVEFORM", 6, 3, 70, 12, Justification::left, false);
 
-        // Waveform path — drawn twice for glow effect
+        // Waveform path
         const float xScale  = (float)w / (float)(BUFFER_SIZE - 1);
         const float yCenter = h * 0.5f;
         const float yScale  = h * 0.42f;
@@ -258,18 +266,35 @@ public:
         for (int i = 0; i < BUFFER_SIZE; i++) {
             float px = i * xScale;
             float py = yCenter - displaySamples[i] * yScale;
-            py = jlimit(1.0f, (float)(h - 1), py);
+            py = jlimit(2.0f, (float)(h - 2), py);
             if (!started) { wPath.startNewSubPath(px, py); started = true; }
             else           wPath.lineTo(px, py);
         }
 
+        // Filled area under waveform with gradient
+        {
+            Path fillPath(wPath);
+            fillPath.lineTo((float)w, yCenter);
+            fillPath.lineTo(0.0f, yCenter);
+            fillPath.closeSubPath();
+
+            ColourGradient fillGrad(Colour(0xFF00B8D4).withAlpha(0.12f), 0.0f, 0.0f,
+                                    Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, (float)h, false);
+            g.setGradientFill(fillGrad);
+            g.fillPath(fillPath);
+        }
+
         // Outer glow (thicker, more transparent)
-        g.setColour(Colour(0xFF1E90FF).withAlpha(0.18f));
-        g.strokePath(wPath, PathStrokeType(3.5f));
+        g.setColour(Colour(0xFF00E5A0).withAlpha(0.1f));
+        g.strokePath(wPath, PathStrokeType(4.0f));
+
+        // Mid glow
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.2f));
+        g.strokePath(wPath, PathStrokeType(2.0f));
 
         // Inner bright line
-        g.setColour(Colour(0xFF5AB4FF));
-        g.strokePath(wPath, PathStrokeType(1.2f));
+        g.setColour(Colour(0xFF00FFD0));
+        g.strokePath(wPath, PathStrokeType(1.0f));
     }
 
 private:

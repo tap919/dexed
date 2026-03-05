@@ -88,29 +88,30 @@ DXLookNFeel::DXLookNFeel() {
     Colour ctrlBackground;
     
     DexedAudioProcessor::dexedAppDir.setAsCurrentWorkingDirectory();
-    ctrlBackground = Colour(0, 10, 22);
+    ctrlBackground = Colour(0xFF0A1220);
 
-    // WARNING! If you modify the colour IDs here, please actualize the file ''DexedTheme.md'' 
-    // in the subdirectory ``~/dexed/Documentation/``    
+    // WARNING! If you modify the colour IDs here, please keep the theme definition
+    // in ``TapSynthTheme.xml`` (and any legacy ``DexedTheme.xml``) and the docs under
+    // ``~/TapSynth/Documentation/`` in sync.
 
-    REG_COLOUR(TextButton::buttonColourId,Colour(0xFFFFBF00));
-    REG_COLOUR(TextButton::textColourOnId, Colours::black);
-    REG_COLOUR(TextButton::textColourOffId, Colours::black);
-    REG_COLOUR(Slider::rotarySliderOutlineColourId,Colour(0xFF1E90FF));
-    REG_COLOUR(Slider::rotarySliderFillColourId,Colour(0xFFFFBF00));
+    REG_COLOUR(TextButton::buttonColourId,Colour(0xFF00E5A0));
+    REG_COLOUR(TextButton::textColourOnId, Colour(0xFF0A0E14));
+    REG_COLOUR(TextButton::textColourOffId, Colour(0xFF0A0E14));
+    REG_COLOUR(Slider::rotarySliderOutlineColourId,Colour(0xFF00B8D4));
+    REG_COLOUR(Slider::rotarySliderFillColourId,Colour(0xFF00E5A0));
     REG_COLOUR(AlertWindow::backgroundColourId,lightBackground);
     REG_COLOUR(AlertWindow::textColourId, Colours::white);
     REG_COLOUR(TextEditor::backgroundColourId,ctrlBackground);
-    REG_COLOUR(TextEditor::textColourId, Colour(0xFF00CFFF));
+    REG_COLOUR(TextEditor::textColourId, Colour(0xFF00E5FF));
     REG_COLOUR(TextEditor::highlightColourId, fillColour);
     REG_COLOUR(TextEditor::outlineColourId, Colours::transparentBlack);
     REG_COLOUR(ComboBox::backgroundColourId, ctrlBackground);
-    REG_COLOUR(ComboBox::textColourId, Colour(0xFF00CFFF));
-    REG_COLOUR(ComboBox::buttonColourId, Colour(0xFF1E90FF));
+    REG_COLOUR(ComboBox::textColourId, Colour(0xFF00E5FF));
+    REG_COLOUR(ComboBox::buttonColourId, Colour(0xFF00B8D4));
     REG_COLOUR(PopupMenu::backgroundColourId, background);
     REG_COLOUR(PopupMenu::textColourId, Colours::white);
-    REG_COLOUR(PopupMenu::highlightedTextColourId, Colours::black);
-    REG_COLOUR(PopupMenu::highlightedBackgroundColourId, Colour(0xFFFFBF00));
+    REG_COLOUR(PopupMenu::highlightedTextColourId, Colour(0xFF0A0E14));
+    REG_COLOUR(PopupMenu::highlightedBackgroundColourId, Colour(0xFF00E5A0));
     REG_COLOUR(TreeView::backgroundColourId, background);
     REG_COLOUR(DirectoryContentsDisplayComponent::highlightColourId, fillColour);
     REG_COLOUR(DirectoryContentsDisplayComponent::textColourId, Colours::white);
@@ -135,10 +136,14 @@ DXLookNFeel::DXLookNFeel() {
     imageGlobal = ImageCache::getFromMemory (BinaryData::GlobalEditor_1728x288_png, BinaryData::GlobalEditor_1728x288_pngSize); // 2x
 
     //---
-    // load and parse the file ``DexedTheme.xml``
+    // load and parse the file ``TapSynthTheme.xml`` (also checks ``DexedTheme.xml`` for backward compatibility)
     //---
 
-    File dexedTheme = DexedAudioProcessor::dexedAppDir.getChildFile("DexedTheme.xml");
+    File dexedTheme = DexedAudioProcessor::dexedAppDir.getChildFile("TapSynthTheme.xml");
+    if ( ! dexedTheme.existsAsFile() ) {
+        // Backward compatibility: fall back to legacy theme file name
+        dexedTheme = DexedAudioProcessor::dexedAppDir.getChildFile("DexedTheme.xml");
+    }
 
     if ( ! dexedTheme.existsAsFile() ) {
         TRACE("file \"%s\" does not exists", dexedTheme.getFullPathName().toRawUTF8());
@@ -284,12 +289,33 @@ void DXLookNFeel::drawRotarySlider( Graphics &g, int x, int y, int width, int he
      const int nFrames = imageKnob.getHeight()/imageKnob.getWidth(); // number of frames for vertical film strip
      const int frameIdx = (int)ceil(fractRotation * ((double)nFrames-1.0) ); // current index from 0 --> nFrames-1
 
-     //const float radius = jmin (width / 2.0f, height / 2.0f) ; // float multiplication by 0.5 is faster than division by 2.0
      const float radius = jmin(width * 0.5f, height * 0.5f);
      const float centreX = x + width * 0.5f;
      const float centreY = y + height * 0.5f;
      const float rx = centreX - radius - 1.0f;
      const float ry = centreY - radius - 1.0f;
+
+     // Draw value arc behind the knob
+     const float arcRadius = radius + 1.0f;
+     const float startAngle = rotaryStartAngle;
+     const float endAngle = rotaryEndAngle;
+     const float valueAngle = startAngle + sliderPosProportional * (endAngle - startAngle);
+
+     // Background arc (dim)
+     Path bgArc;
+     bgArc.addArc(centreX - arcRadius, centreY - arcRadius, arcRadius * 2.0f, arcRadius * 2.0f,
+                  startAngle, endAngle, true);
+     g.setColour(Colour(0xFF00B8D4).withAlpha(0.08f));
+     g.strokePath(bgArc, PathStrokeType(2.0f));
+
+     // Value arc (bright)
+     if (sliderPosProportional > 0.001f) {
+         Path valArc;
+         valArc.addArc(centreX - arcRadius, centreY - arcRadius, arcRadius * 2.0f, arcRadius * 2.0f,
+                       startAngle, valueAngle, true);
+         g.setColour(Colour(0xFF00E5A0).withAlpha(0.3f));
+         g.strokePath(valArc, PathStrokeType(2.0f));
+     }
 
      g.drawImage(imageKnob, (int)rx, (int)ry, 2*(int)radius, 2*(int)radius, 0, frameIdx*imageKnob.getWidth(), imageKnob.getWidth(), imageKnob.getWidth());
 };
@@ -355,8 +381,8 @@ void DXLookNFeel::positionComboBoxText(ComboBox& box, Label& label) {
     LookAndFeel_V4::positionComboBoxText(box, label);
 }
 
-Colour DXLookNFeel::fillColour = Colour(0xFF1E90FF);
-Colour DXLookNFeel::lightBackground = Colour(0xFF0D1B2A);
-Colour DXLookNFeel::background = Colour(0xFF070E1A);
+Colour DXLookNFeel::fillColour = Colour(0xFF00B8D4);
+Colour DXLookNFeel::lightBackground = Colour(0xFF0D1926);
+Colour DXLookNFeel::background = Colour(0xFF060D17);
 Colour DXLookNFeel::roundBackground = Colour(0xFF0A1525);
 

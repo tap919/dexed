@@ -200,6 +200,8 @@ int DexedAudioProcessor::updateProgramFromSysex(const uint8_t *rawdata) {
 
 void DexedAudioProcessor::setupStartupCart() {
     File startup = dexedCartDir.getChildFile("Dexed_01.syx");
+    if ( ! startup.existsAsFile() )
+        startup = dexedCartDir.getChildFile("TapSynth_01.syx");
 
     if ( currentCart.load(startup) != -1 ) {
         loadCartridge(currentCart);
@@ -218,6 +220,45 @@ void DexedAudioProcessor::setupStartupCart() {
 
     delete is;
     delete builtin_pgm;
+}
+
+bool DexedAudioProcessor::loadStockBank(int bankIndex) {
+    // Stock bank file names from the built-in zip:
+    //   0 = "Analog Classics"  → Dexed_01.syx
+    //   1 = "Digital Textures" → SynprezFM_01.syx
+    //   2 = "Ambient Pads"    → SynprezFM_02.syx
+    static const char* bankFiles[] = {
+        "Dexed_01.syx",
+        "SynprezFM_01.syx",
+        "SynprezFM_02.syx"
+    };
+
+    if (bankIndex < 0 || bankIndex > 2)
+        return false;
+
+    MemoryInputStream *mis = new MemoryInputStream(BinaryData::builtin_pgm_zip, BinaryData::builtin_pgm_zipSize, false);
+    ZipFile *builtin_pgm = new ZipFile(mis, true);
+    int idx = builtin_pgm->getIndexOfFileName(bankFiles[bankIndex]);
+    if (idx < 0) {
+        delete builtin_pgm;
+        return false;
+    }
+    InputStream *is = builtin_pgm->createStreamForEntry(idx);
+    if (is == nullptr) {
+        delete builtin_pgm;
+        return false;
+    }
+    Cartridge bank;
+    bool ok = (bank.load(*is) != -1);
+    delete is;
+    delete builtin_pgm;
+
+    if (ok) {
+        loadCartridge(bank);
+        setCurrentProgram(0);
+        triggerAsyncUpdate();
+    }
+    return ok;
 }
 
 void DexedAudioProcessor::resetToInitVoice() {
@@ -515,28 +556,38 @@ File DexedAudioProcessor::dexedCartDir;
 
 void DexedAudioProcessor::resolvAppDir() {
     #if JUCE_MAC || JUCE_IOS
-        File parent = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getParentDirectory().getSiblingFile("Dexed");
+        File parent = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getParentDirectory().getSiblingFile("TapSynth");
     
         if ( parent.isDirectory() ) {
             dexedAppDir = parent;
         } else {
-            dexedAppDir = File("~/Library/Application Support/DigitalSuburban/Dexed");
+            // Also check legacy Dexed directory
+            parent = File::getSpecialLocation(File::currentExecutableFile).getParentDirectory().getParentDirectory().getParentDirectory().getSiblingFile("Dexed");
+            if ( parent.isDirectory() ) {
+                dexedAppDir = parent;
+            } else {
+                dexedAppDir = File("~/Library/Application Support/TapSynth");
+            }
         }
     #elif JUCE_WINDOWS
-        if ( File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("Dexed").isDirectory() ) {
+        if ( File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("TapSynth").isDirectory() ) {
+            dexedAppDir = File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("TapSynth");
+        } else if ( File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("Dexed").isDirectory() ) {
             dexedAppDir = File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("Dexed");
         } else {
-            dexedAppDir = File::getSpecialLocation(File::userApplicationDataDirectory).getChildFile("DigitalSuburban").getChildFile("Dexed");
+            dexedAppDir = File::getSpecialLocation(File::userApplicationDataDirectory).getChildFile("TapSynth");
         }
     #else
-        if ( File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("Dexed").isDirectory() ) {
+        if ( File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("TapSynth").isDirectory() ) {
+            dexedAppDir = File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("TapSynth");
+        } else if ( File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("Dexed").isDirectory() ) {
             dexedAppDir = File::getSpecialLocation(File::currentExecutableFile).getSiblingFile("Dexed");
         } else {
             char *xdgHome = getenv("XDG_DATA_HOME");
             if ( xdgHome == nullptr ) {
-                dexedAppDir = File("~/.local/share").getChildFile("DigitalSuburban").getChildFile("Dexed");
+                dexedAppDir = File("~/.local/share").getChildFile("TapSynth");
             } else {
-                dexedAppDir = File(xdgHome).getChildFile("DigitalSuburban").getChildFile("Dexed");
+                dexedAppDir = File(xdgHome).getChildFile("TapSynth");
             }
         }
     #endif

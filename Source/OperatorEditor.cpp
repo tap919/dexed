@@ -168,10 +168,10 @@ OperatorEditor::OperatorEditor ()
     khzDisplay->setFont (juce::Font (12.60f, juce::Font::plain).withTypefaceStyle ("Regular"));
     khzDisplay->setJustificationType (juce::Justification::centred);
     khzDisplay->setEditable (false, false, false);
-    khzDisplay->setColour (juce::Label::backgroundColourId, juce::Colour (0x6a000000));
-    khzDisplay->setColour (juce::Label::textColourId, juce::Colours::white);
+    khzDisplay->setColour (juce::Label::backgroundColourId, juce::Colour (0xFF040A14));
+    khzDisplay->setColour (juce::Label::textColourId, juce::Colour(0xFF00E5FF));
     khzDisplay->setColour (juce::Label::outlineColourId, juce::Colour (0x00000000));
-    khzDisplay->setColour (juce::TextEditor::textColourId, juce::Colours::black);
+    khzDisplay->setColour (juce::TextEditor::textColourId, juce::Colour(0xFF00E5FF));
     khzDisplay->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0x00000000));
 
     khzDisplay->setBounds (15, 10, 95, 10);
@@ -361,31 +361,70 @@ OperatorEditor::~OperatorEditor()
 void OperatorEditor::paint (juce::Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
-    // Futuristic dark-navy background with blue border
-    g.fillAll(Colour(0xFF070E1A));
+    const int w = 287;
+    const int h = 218;
 
-    // Outer blue border
-    g.setColour(Colour(0xFF1E90FF).withAlpha(0.4f));
-    g.drawRect(0, 0, 287, 218, 1);
+    // Main background - very dark with subtle rounded rect
+    g.fillAll(Colour(0xFF080E18));
 
-    // Inner top header band
-    g.setColour(Colour(0xFF0A1525));
-    g.fillRect(0, 0, 287, 50);
+    // Outer panel border - subtle rounded rectangle
+    g.setColour(Colour(0xFF00B8D4).withAlpha(0.18f));
+    g.drawRoundedRectangle(0.5f, 0.5f, w - 1.0f, h - 1.0f, 4.0f, 1.0f);
 
-    // Header border line
-    g.setColour(Colour(0xFF1E90FF).withAlpha(0.3f));
-    g.drawHorizontalLine(50, 0.0f, 287.0f);
+    // Header band with gradient
+    {
+        ColourGradient headerGrad(Colour(0xFF0C1A2E), 0.0f, 0.0f,
+                                  Colour(0xFF081420), 0.0f, 56.0f, false);
+        g.setGradientFill(headerGrad);
+        g.fillRoundedRectangle(1.0f, 1.0f, w - 2.0f, 55.0f, 3.0f);
+    }
+
+    // Header bottom glow line
+    {
+        ColourGradient lineGrad(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, 56.0f,
+                                Colour(0xFF00B8D4).withAlpha(0.35f), w * 0.5f, 56.0f, false);
+        lineGrad.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(lineGrad);
+        g.fillRect(0.0f, 55.0f, (float)w, 1.5f);
+    }
+
+    // Envelope section background
+    g.setColour(Colour(0xFF060C16).withAlpha(0.7f));
+    g.fillRoundedRectangle(3.0f, 74.0f, 124.0f, 140.0f, 3.0f);
+    g.setColour(Colour(0xFF00B8D4).withAlpha(0.08f));
+    g.drawRoundedRectangle(3.0f, 74.0f, 124.0f, 140.0f, 3.0f, 0.5f);
+
+    // Scaling section background
+    g.setColour(Colour(0xFF060C16).withAlpha(0.7f));
+    g.fillRoundedRectangle(128.0f, 106.0f, 155.0f, 108.0f, 3.0f);
+    g.setColour(Colour(0xFF00B8D4).withAlpha(0.08f));
+    g.drawRoundedRectangle(128.0f, 106.0f, 155.0f, 108.0f, 3.0f, 0.5f);
+
+    // Section labels
+    g.setFont(Font(8.0f, Font::bold));
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.55f));
+    g.drawText("ENVELOPE", 6, 76, 60, 10, Justification::left, false);
+    g.drawText("SCALING",  132, 108, 50, 10, Justification::left, false);
+
+    // Frequency section label
+    g.drawText("FREQ", 6, 60, 40, 10, Justification::left, false);
     //[/UserPrePaint]
 
     //[UserPaint] Add your own custom painting code here..
 
-    if ( opSwitch->getToggleState() )
-        g.setColour(Colour(0xFF1E90FF));
-    else
-        g.setColour(Colour(0xFF1E90FF).withAlpha(0.25f));
+    // Operator number badge
+    bool opOn = opSwitch->getToggleState();
+    if ( opOn ) {
+        // Glowing badge background
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.15f));
+        g.fillRoundedRectangle(247.0f, 10.0f, 34.0f, 34.0f, 6.0f);
+        g.setColour(Colour(0xFF00E5FF));
+    } else {
+        g.setColour(Colour(0xFF00E5FF).withAlpha(0.2f));
+    }
 
-    g.setFont(Font (30.00f, Font::plain));
-    g.drawText(opNum, 250, 14, 30, 30, Justification::centred, true);
+    g.setFont(Font (26.00f, Font::bold));
+    g.drawText(opNum, 247, 10, 34, 34, Justification::centred, true);
 
     bool state = opMode->getToggleState();
 
@@ -393,6 +432,12 @@ void OperatorEditor::paint (juce::Graphics& g)
     g.drawImage(light, 127, 24, 14, 14, 0, state ? 0 : 28, 28, 28);
     // 199 x 24
     g.drawImage(light, 198, 24, 14, 14, 0, !state ? 0 : 28, 28, 28);
+
+    // Mode labels
+    g.setFont(Font(8.0f));
+    g.setColour(Colour(0xFF8899AA));
+    g.drawText("RATIO", 115, 34, 30, 10, Justification::centred, false);
+    g.drawText("FIXED", 186, 34, 30, 10, Justification::centred, false);
     //[/UserPaint]
 }
 

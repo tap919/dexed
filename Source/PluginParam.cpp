@@ -852,7 +852,11 @@ String DexedAudioProcessor::getParameterID(int index) {
 }
 
 void DexedAudioProcessor::loadPreference() {
-    File propFile = DexedAudioProcessor::dexedAppDir.getChildFile("Dexed.xml");
+    File propFile = DexedAudioProcessor::dexedAppDir.getChildFile("TapSynth.xml");
+    if ( ! propFile.existsAsFile() ) {
+        // Backward compatibility: fall back to legacy config file
+        propFile = DexedAudioProcessor::dexedAppDir.getChildFile("Dexed.xml");
+    }
     PropertiesFile::Options prefOptions;
     PropertiesFile prop(propFile, prefOptions);
     
@@ -922,7 +926,7 @@ void DexedAudioProcessor::loadPreference() {
 }
 
 void DexedAudioProcessor::savePreference() {
-    File propFile = DexedAudioProcessor::dexedAppDir.getChildFile("Dexed.xml");
+    File propFile = DexedAudioProcessor::dexedAppDir.getChildFile("TapSynth.xml");
     PropertiesFile::Options prefOptions;
     PropertiesFile prop(propFile, prefOptions);
     

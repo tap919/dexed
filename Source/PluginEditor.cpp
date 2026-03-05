@@ -145,37 +145,46 @@ DexedAudioProcessorEditor::~DexedAudioProcessorEditor() {
 
 void DexedAudioProcessorEditor::updateChorusButtons() {
     float mode = processor->fxChorusMode->getValueHost();
-    // Highlight the active button with yellow, others default
-    auto highlight = Colour(0xFFFFBF00);
-    auto normal    = Colour(0xFF1E90FF);
+    // Highlight the active button with teal-green, others default
+    auto highlight = Colour(0xFF00E5A0);
+    auto normal    = Colour(0xFF00B8D4);
     chorusOffBtn->setColour(TextButton::buttonColourId, mode <= 0.25f ? highlight : normal);
-    chorusOffBtn->setColour(TextButton::textColourOffId, mode <= 0.25f ? Colours::black : Colours::white);
+    chorusOffBtn->setColour(TextButton::textColourOffId, mode <= 0.25f ? Colour(0xFF0A0E14) : Colours::white);
     chorusIBtn->setColour(TextButton::buttonColourId,   (mode > 0.25f && mode <= 0.75f) ? highlight : normal);
-    chorusIBtn->setColour(TextButton::textColourOffId,  (mode > 0.25f && mode <= 0.75f) ? Colours::black : Colours::white);
+    chorusIBtn->setColour(TextButton::textColourOffId,  (mode > 0.25f && mode <= 0.75f) ? Colour(0xFF0A0E14) : Colours::white);
     chorusIIBtn->setColour(TextButton::buttonColourId,  mode > 0.75f ? highlight : normal);
-    chorusIIBtn->setColour(TextButton::textColourOffId, mode > 0.75f ? Colours::black : Colours::white);
+    chorusIIBtn->setColour(TextButton::textColourOffId, mode > 0.75f ? Colour(0xFF0A0E14) : Colours::white);
 }
 
 //==============================================================================
 void DexedAudioProcessorEditor::paint (Graphics& g) {
-    g.setColour(background);
-    g.fillRoundedRectangle(0.0f, 0.0f, (float) getWidth(), (float) getHeight(), 0);
+    // Main background
+    g.fillAll(Colour(0xFF050B14));
 
     // The paint() here is on the outer (scaled) container.
-    // The waveformVis strip background is painted by the component itself.
-    // Draw a yellow accent label for the CHORUS section header.
     float factor = processor->getZoomFactor();
     float stripY  = VIS_STRIP_Y  * factor;
     float stripH  = VIS_STRIP_H  * factor;
 
-    // Horizontal separator lines bordering the visualizer strip
-    g.setColour(Colour(0xFF1E90FF).withAlpha(0.35f));
-    g.drawHorizontalLine((int)stripY,        0.0f, (float)getWidth());
-    g.drawHorizontalLine((int)(stripY + stripH), 0.0f, (float)getWidth());
+    // Gradient separator lines bordering the visualizer strip
+    {
+        ColourGradient topLine(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, stripY,
+                               Colour(0xFF00B8D4).withAlpha(0.4f), getWidth() * 0.5f, stripY, false);
+        topLine.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(topLine);
+        g.fillRect(0.0f, stripY, (float)getWidth(), 1.5f);
+    }
+    {
+        ColourGradient botLine(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, stripY + stripH,
+                               Colour(0xFF00B8D4).withAlpha(0.4f), getWidth() * 0.5f, stripY + stripH, false);
+        botLine.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(botLine);
+        g.fillRect(0.0f, stripY + stripH - 0.5f, (float)getWidth(), 1.5f);
+    }
 
     // "CHORUS" label above the buttons
-    g.setColour(Colour(0xFFFFBF00).withAlpha(0.8f));
-    g.setFont(Font(9.5f, Font::bold));
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.7f));
+    g.setFont(Font(8.5f, Font::bold));
     g.drawText("JUNO CHORUS", (int)(706 * factor), (int)stripY, (int)(160 * factor), 14, Justification::centred, false);
 }
 
@@ -307,7 +316,7 @@ void DexedAudioProcessorEditor::parmShow() {
                                };
     param->setGeneralCallback(generalCallback);
 
-    dexedParameterDialog = std::make_unique<DexedDialogWindow>("dexed Parameters", Colour(0xFF323E44));
+    dexedParameterDialog = std::make_unique<DexedDialogWindow>("TapSynth Parameters", Colour(0xFF323E44));
     dexedParameterDialog->setContentOwned(param, true);
     frameComponent.addAndMakeVisible(dexedParameterDialog.get());
     dexedParameterDialog->centreAroundComponent(&frameComponent, param->getWidth(), param->getHeight() + dexedParameterDialog->getTitleBarHeight());

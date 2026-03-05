@@ -78,7 +78,7 @@ public:
     std::unique_ptr<juce::HyperlinkButton> dexed; // changed to std::unique_ptr from juce::ScopedPointer
     std::unique_ptr<juce::HyperlinkButton> surge; // changed to std::unique_ptr from juce::ScopedPointer
 
-    AboutBox() : DialogWindow("About", Colour(0xFF000000), true),
+    AboutBox() : DialogWindow("About TapSynth", Colour(0xFF000000), true),
         dexed(std::make_unique<juce::HyperlinkButton>("https://asb2m10.github.io/dexed/", URL("https://asb2m10.github.io/dexed/"))),
         surge(std::make_unique<juce::HyperlinkButton>("https://surge-synthesizer.github.io/", URL("https://surge-synthesizer.github.io/")))
     {
@@ -115,11 +115,11 @@ public:
                      0, 0, logo_png.getWidth(), logo_png.getHeight());
         g.setFont(20);
         g.setColour(Colour(0xFFFFFFFF));
-        const char *credits = "Version " DEXED_VERSION " build date: " __DATE__ "\n"
+        const char *credits = "TapSynth " DEXED_VERSION " build date: " __DATE__ "\n"
                             "This software is released under the GPL V3\n\n"
-                            "DSP Engine: orignal project (msfa) Raph Levin, enhancements Pascal Gauthier\n"
-                            "UI Programming: Pascal Gauthier\n"
-                            "UI Design: AZur Studio\n\n"
+                            "Based on Dexed by Pascal Gauthier\n"
+                            "DSP Engine: original project (msfa) Raph Levin, enhancements Pascal Gauthier\n"
+                            "UI Design: TapSynth Team\n\n"
                             "Credits to Surge Synthesizer Team for MPE and microtuning support\n"
                             "Credits to GitHub users: tico-tico, Sentinel77, jeremybernstein; filters based on OB-Xd";
         g.drawMultiLineText(credits, 18, 260, logo_png.getWidth()-18);
@@ -497,6 +497,24 @@ GlobalEditor::GlobalEditor ()
     eqHigh->setDoubleClickReturnValue(true, 0.5);
     eqHigh->setBounds(354, 154, 34, 34);
 
+    // Stock bank selector
+    bankSelector.reset(new juce::ComboBox("bankSelector"));
+    addAndMakeVisible(bankSelector.get());
+    bankSelector->addItem("Analog Classics", 1);
+    bankSelector->addItem("Digital Textures", 2);
+    bankSelector->addItem("Ambient Pads", 3);
+    bankSelector->setSelectedId(1, dontSendNotification);
+    bankSelector->setTitle("Stock Bank");
+    bankSelector->setBounds(430, 158, 150, 24);
+    bankSelector->onChange = [this] {
+        int bankIdx = bankSelector->getSelectedId() - 1;
+        if (processor != nullptr && bankIdx >= 0 && bankIdx <= 2) {
+            processor->loadStockBank(bankIdx);
+            editor->rebuildProgramCombobox();
+            editor->updateUI();
+        }
+    };
+
 
     //[UserPreSize]
     //[/UserPreSize]
@@ -521,7 +539,7 @@ GlobalEditor::GlobalEditor ()
     setTitle("Global Parameters");
     setFocusContainerType(FocusContainerType::focusContainer);
     setWantsKeyboardFocus(true);
-    aboutButton->setTitle("About DEXED");
+    aboutButton->setTitle("About TapSynth");
     //[/Constructor]
 }
 
@@ -571,6 +589,7 @@ GlobalEditor::~GlobalEditor()
     eqLowMid = nullptr;
     eqHighMid = nullptr;
     eqHigh = nullptr;
+    bankSelector = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
@@ -581,41 +600,78 @@ GlobalEditor::~GlobalEditor()
 void GlobalEditor::paint (juce::Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
-    // Futuristic dark-navy background instead of the original bitmap
-    g.fillAll(Colour(0xFF070E1A));
+    const float W = 864.0f;
 
-    // Section dividers with blue glow
-    g.setColour(Colour(0xFF1E90FF).withAlpha(0.25f));
-    // Horizontal separator line at top
-    g.drawHorizontalLine(0, 0.0f, 864.0f);
-    // Vertical section separators
-    for (int x : { 152, 332, 496, 558, 730 })
-        g.drawVerticalLine(x, 2.0f, 142.0f);
+    // TapSynth modern dark background
+    g.fillAll(Colour(0xFF060D17));
 
-    // Section labels
-    g.setFont(Font(9.5f, Font::bold));
-    g.setColour(Colour(0xFFFFBF00));  // McDonald's yellow labels
-    g.drawText("MASTER",   2,   128, 148, 12, Justification::centred, false);
-    g.drawText("FILTER",   154, 128, 176, 12, Justification::centred, false);
-    g.drawText("ALGORITHM",334, 128, 160, 12, Justification::centred, false);
-    g.drawText("MOOG FILTER",334, 3,  160, 12, Justification::centred, false);
-    g.drawText("LFO",      498, 128, 230, 12, Justification::centred, false);
-    g.drawText("PITCH EG", 732, 128, 130, 12, Justification::centred, false);
+    // Top glow line (gradient fading from center)
+    {
+        ColourGradient topGlow(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, 0.0f,
+                               Colour(0xFF00B8D4).withAlpha(0.35f), W * 0.5f, 0.0f, false);
+        topGlow.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(topGlow);
+        g.fillRect(0.0f, 0.0f, W, 1.5f);
+    }
 
-    // Bottom FX strip separator
-    g.setColour(Colour(0xFF1E90FF).withAlpha(0.25f));
-    g.drawHorizontalLine(148, 0.0f, 864.0f);
+    // Section panel backgrounds with subtle rounded rectangles
+    auto drawSectionPanel = [&](float x, float y, float w, float h) {
+        g.setColour(Colour(0xFF0A1220).withAlpha(0.5f));
+        g.fillRoundedRectangle(x, y, w, h, 3.0f);
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.08f));
+        g.drawRoundedRectangle(x, y, w, h, 3.0f, 0.5f);
+    };
 
-    // Bottom FX strip section labels
-    g.setColour(Colour(0xFFFFBF00));
-    g.drawText("DRIFT",    2,   207, 60,  12, Justification::centred, false);
-    g.drawText("SAT",      56,  207, 60,  12, Justification::centred, false);
-    g.drawText("REVERSE",  108, 207, 60,  12, Justification::centred, false);
-    g.drawText("4-BAND EQ",190, 207, 210, 12, Justification::centred, false);
+    // Master section panel
+    drawSectionPanel(2.0f, 2.0f, 148.0f, 138.0f);
+    // Filter section panel
+    drawSectionPanel(154.0f, 2.0f, 176.0f, 138.0f);
+    // Algorithm section panel
+    drawSectionPanel(334.0f, 16.0f, 160.0f, 124.0f);
+    // LFO section panel
+    drawSectionPanel(498.0f, 2.0f, 230.0f, 138.0f);
+    // Pitch EG section panel
+    drawSectionPanel(732.0f, 2.0f, 130.0f, 138.0f);
+
+    // Section labels with glow
+    g.setFont(Font(9.0f, Font::bold));
+    g.setColour(Colour(0xFF00E5A0));
+    g.drawText("MASTER",    2,   128, 148, 12, Justification::centred, false);
+    g.drawText("FILTER",    154, 128, 176, 12, Justification::centred, false);
+    g.drawText("ALGORITHM", 334, 128, 160, 12, Justification::centred, false);
+    g.drawText("LFO",       498, 128, 230, 12, Justification::centred, false);
+    g.drawText("PITCH EG",  732, 128, 130, 12, Justification::centred, false);
+
+    // Filter type label
+    g.setFont(Font(8.0f));
+    g.setColour(Colour(0xFF8899AA));
+    g.drawText("MOOG FILTER", 334, 3, 160, 12, Justification::centred, false);
+
+    // FX strip separator with gradient glow
+    {
+        ColourGradient stripGlow(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, 148.0f,
+                                 Colour(0xFF00B8D4).withAlpha(0.3f), W * 0.5f, 148.0f, false);
+        stripGlow.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(stripGlow);
+        g.fillRect(0.0f, 147.0f, W, 2.0f);
+    }
+
+    // FX strip background
+    g.setColour(Colour(0xFF050A14).withAlpha(0.6f));
+    g.fillRect(0.0f, 149.0f, W, 71.0f);
+
+    // FX section labels
+    g.setFont(Font(8.0f, Font::bold));
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.85f));
+    g.drawText("DRIFT",     2,   207, 60,  12, Justification::centred, false);
+    g.drawText("SAT",       56,  207, 60,  12, Justification::centred, false);
+    g.drawText("REVERSE",   108, 207, 60,  12, Justification::centred, false);
+    g.drawText("4-BAND EQ", 190, 207, 210, 12, Justification::centred, false);
+    g.drawText("STOCK BANK",420, 207, 170, 12, Justification::centred, false);
 
     // Sub-labels for EQ bands
-    g.setFont(Font(8.5f));
-    g.setColour(Colour(0xFFAAAAAA));
+    g.setFont(Font(7.5f));
+    g.setColour(Colour(0xFF607080));
     g.drawText("LOW",    200, 194, 42, 10, Justification::centred, false);
     g.drawText("L-MID",  248, 194, 42, 10, Justification::centred, false);
     g.drawText("H-MID",  296, 194, 42, 10, Justification::centred, false);

@@ -133,6 +133,9 @@ private:
     std::unique_ptr<juce::Slider> eqHighMid;
     std::unique_ptr<juce::Slider> eqHigh;
 
+    // Stock bank selector (3 banks: Analog Classics, Digital Textures, Ambient Pads)
+    std::unique_ptr<juce::ComboBox> bankSelector;
+
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GlobalEditor)

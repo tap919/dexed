@@ -1,4 +1,4 @@
-set(BaseTargetName Dexed)
+set(BaseTargetName TapSynth)
 
 set(DEXED_JUCE_FORMATS Standalone)
 
@@ -10,30 +10,30 @@ if (APPLE)
   list(APPEND DEXED_JUCE_FORMATS AU)
 endif()
 
-message(STATUS "Building Dexed in formats: ${DEXED_JUCE_FORMATS}")
+message(STATUS "Building TapSynth in formats: ${DEXED_JUCE_FORMATS}")
 
 juce_add_plugin("${BaseTargetName}"
         VERSION "1.0.1"
         ICON_BIG "../assets/ui/dexedIcon.png"
         ICON_SMALL "../assets/ui/dexedIcon.png"
-        COMPANY_NAME "Digital Suburban"
+        COMPANY_NAME "TapSynth"
         IS_SYNTH TRUE
         NEEDS_MIDI_INPUT TRUE
         NEEDS_MIDI_OUTPUT TRUE
         IS_MIDI_EFFECT FALSE
         EDITOR_WANTS_KEYBOARD_FOCUS TRUE
-        PLUGIN_MANUFACTURER_CODE DGSB
-        PLUGIN_CODE Dexd
+        PLUGIN_MANUFACTURER_CODE TpSn
+        PLUGIN_CODE TpSy
         FORMATS ${DEXED_JUCE_FORMATS}
-        PRODUCT_NAME "Dexed"
-        DESCRIPTION "Dexed FM Synth"
-        BUNDLE_ID "com.digitalsuburban.Dexed"  # To avoid CMake Warning at libs/JUCE/extras/Build/CMake/JUCEUtils.cmake
+        PRODUCT_NAME "TapSynth"
+        DESCRIPTION "TapSynth FM Synthesizer"
+        BUNDLE_ID "com.tapsynth.TapSynth"
         COPY_PLUGIN_AFTER_BUILD TRUE
 )
 
 clap_juce_extensions_plugin(TARGET ${BaseTargetName}
-        CLAP_ID "com.digital-suburban.dexed"
-        CLAP_FEATURES instrument FM DX7)
+        CLAP_ID "com.tapsynth.tapsynth"
+        CLAP_FEATURES instrument FM synthesizer)
 
 juce_generate_juce_header(${PROJECT_NAME})
 
