@@ -600,42 +600,78 @@ GlobalEditor::~GlobalEditor()
 void GlobalEditor::paint (juce::Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
+    const float W = 864.0f;
+
     // TapSynth modern dark background
     g.fillAll(Colour(0xFF060D17));
 
-    // Section dividers with teal glow
-    g.setColour(Colour(0xFF00B8D4).withAlpha(0.2f));
-    // Horizontal separator line at top
-    g.drawHorizontalLine(0, 0.0f, 864.0f);
-    // Vertical section separators
-    for (int x : { 152, 332, 496, 558, 730 })
-        g.drawVerticalLine(x, 2.0f, 142.0f);
+    // Top glow line (gradient fading from center)
+    {
+        ColourGradient topGlow(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, 0.0f,
+                               Colour(0xFF00B8D4).withAlpha(0.35f), W * 0.5f, 0.0f, false);
+        topGlow.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(topGlow);
+        g.fillRect(0.0f, 0.0f, W, 1.5f);
+    }
 
-    // Section labels
-    g.setFont(Font(9.5f, Font::bold));
-    g.setColour(Colour(0xFF00E5A0));  // Modern teal-green labels
-    g.drawText("MASTER",   2,   128, 148, 12, Justification::centred, false);
-    g.drawText("FILTER",   154, 128, 176, 12, Justification::centred, false);
-    g.drawText("ALGORITHM",334, 128, 160, 12, Justification::centred, false);
-    g.drawText("MOOG FILTER",334, 3,  160, 12, Justification::centred, false);
-    g.drawText("LFO",      498, 128, 230, 12, Justification::centred, false);
-    g.drawText("PITCH EG", 732, 128, 130, 12, Justification::centred, false);
+    // Section panel backgrounds with subtle rounded rectangles
+    auto drawSectionPanel = [&](float x, float y, float w, float h) {
+        g.setColour(Colour(0xFF0A1220).withAlpha(0.5f));
+        g.fillRoundedRectangle(x, y, w, h, 3.0f);
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.08f));
+        g.drawRoundedRectangle(x, y, w, h, 3.0f, 0.5f);
+    };
 
-    // Bottom FX strip separator
-    g.setColour(Colour(0xFF00B8D4).withAlpha(0.2f));
-    g.drawHorizontalLine(148, 0.0f, 864.0f);
+    // Master section panel
+    drawSectionPanel(2.0f, 2.0f, 148.0f, 138.0f);
+    // Filter section panel
+    drawSectionPanel(154.0f, 2.0f, 176.0f, 138.0f);
+    // Algorithm section panel
+    drawSectionPanel(334.0f, 16.0f, 160.0f, 124.0f);
+    // LFO section panel
+    drawSectionPanel(498.0f, 2.0f, 230.0f, 138.0f);
+    // Pitch EG section panel
+    drawSectionPanel(732.0f, 2.0f, 130.0f, 138.0f);
 
-    // Bottom FX strip section labels
+    // Section labels with glow
+    g.setFont(Font(9.0f, Font::bold));
     g.setColour(Colour(0xFF00E5A0));
-    g.drawText("DRIFT",    2,   207, 60,  12, Justification::centred, false);
-    g.drawText("SAT",      56,  207, 60,  12, Justification::centred, false);
-    g.drawText("REVERSE",  108, 207, 60,  12, Justification::centred, false);
-    g.drawText("4-BAND EQ",190, 207, 210, 12, Justification::centred, false);
+    g.drawText("MASTER",    2,   128, 148, 12, Justification::centred, false);
+    g.drawText("FILTER",    154, 128, 176, 12, Justification::centred, false);
+    g.drawText("ALGORITHM", 334, 128, 160, 12, Justification::centred, false);
+    g.drawText("LFO",       498, 128, 230, 12, Justification::centred, false);
+    g.drawText("PITCH EG",  732, 128, 130, 12, Justification::centred, false);
+
+    // Filter type label
+    g.setFont(Font(8.0f));
+    g.setColour(Colour(0xFF8899AA));
+    g.drawText("MOOG FILTER", 334, 3, 160, 12, Justification::centred, false);
+
+    // FX strip separator with gradient glow
+    {
+        ColourGradient stripGlow(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, 148.0f,
+                                 Colour(0xFF00B8D4).withAlpha(0.3f), W * 0.5f, 148.0f, false);
+        stripGlow.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(stripGlow);
+        g.fillRect(0.0f, 147.0f, W, 2.0f);
+    }
+
+    // FX strip background
+    g.setColour(Colour(0xFF050A14).withAlpha(0.6f));
+    g.fillRect(0.0f, 149.0f, W, 71.0f);
+
+    // FX section labels
+    g.setFont(Font(8.0f, Font::bold));
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.85f));
+    g.drawText("DRIFT",     2,   207, 60,  12, Justification::centred, false);
+    g.drawText("SAT",       56,  207, 60,  12, Justification::centred, false);
+    g.drawText("REVERSE",   108, 207, 60,  12, Justification::centred, false);
+    g.drawText("4-BAND EQ", 190, 207, 210, 12, Justification::centred, false);
     g.drawText("STOCK BANK",420, 207, 170, 12, Justification::centred, false);
 
     // Sub-labels for EQ bands
-    g.setFont(Font(8.5f));
-    g.setColour(Colour(0xFF8899AA));
+    g.setFont(Font(7.5f));
+    g.setColour(Colour(0xFF607080));
     g.drawText("LOW",    200, 194, 42, 10, Justification::centred, false);
     g.drawText("L-MID",  248, 194, 42, 10, Justification::centred, false);
     g.drawText("H-MID",  296, 194, 42, 10, Justification::centred, false);

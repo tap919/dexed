@@ -162,6 +162,7 @@ EnvDisplay::EnvDisplay() {
 
 void EnvDisplay::paint(Graphics &g) {
     int h = getHeight();
+    int w = getWidth();
     uint8_t *rates = pvalues;
     uint8_t *levels = pvalues + 4;
     
@@ -183,11 +184,15 @@ void EnvDisplay::paint(Graphics &g) {
         release = d[3];
     }
     keyoff += 10.0;
-    double w = getWidth() / (keyoff + release);
+    double dw = w / (keyoff + release);
 
-    g.setColour(Colour(0xF0000000));
-    g.fillRoundedRectangle (keyoff*w, 0.0f, (float) getWidth(), (float) getHeight(), 1.0f);
-    g.setColour(Colours::white);
+    // Background
+    g.setColour(Colour(0xFF040A12));
+    g.fillRoundedRectangle(0.0f, 0.0f, (float)w, (float)h, 2.0f);
+
+    // Release zone
+    g.setColour(Colour(0xFF000000).withAlpha(0.4f));
+    g.fillRoundedRectangle ((float)(keyoff*dw), 0.0f, (float)w, (float)h, 1.0f);
 
     int x, y;
     
@@ -198,55 +203,78 @@ void EnvDisplay::paint(Graphics &g) {
     x = 0;
     y = h - h / 99.0 * levels[3];
     p.lineTo(x, y);
-    if ( vPos == 0 || vPos == 1 ) {
-        g.fillEllipse(x-2, y-2, 4, 4);
-    }
-    
+
     // 1
-    x = d[0]*w;
+    x = d[0]*dw;
     y = h - h / 99.0 * levels[0];
     p.lineTo( x, y );
-    if ( vPos == 1 || vPos == 2 ) {
-        g.fillEllipse(x-2, y-2, 4, 4);
-    }
-    
+
     // 2
-    x = (d[0]+d[1])*w;
+    x = (d[0]+d[1])*dw;
     y = h - h / 99.0 * levels[1];
     p.lineTo( x, y );
-    if ( vPos == 2 || vPos == 3 ) {
-        g.fillEllipse(x-2, y-2, 4, 4);
-    }
-    
+
     // 3
-    x = (d[0]+d[1]+d[2])*w;
+    x = (d[0]+d[1]+d[2])*dw;
     y = h - h / 99.0 * levels[2];
     p.lineTo( x, y );
-    if ( vPos == 3 || vPos == 4) {
-        g.fillEllipse(x-2, y-2, 4, 4);
-    }
-    
+
     // 4
-    x = keyoff*w;
+    x = keyoff*dw;
     y = h - h / 99.0 * levels[2];
     p.lineTo( x, y );
-    if ( vPos == 4 ) {
-        g.fillEllipse(x-2, y-2, 4, 4);
-    }
-    
+
     // 5
-    p.lineTo( (d[0]+d[1]+d[2]+keyoff+d[3])*w, h - h / 99.0 * levels[3] );
+    p.lineTo( (d[0]+d[1]+d[2]+keyoff+d[3])*dw, h - h / 99.0 * levels[3] );
     
-    p.lineTo(96,32);
+    p.lineTo(w, 32);
     p.lineTo(0, 32);
 
-    g.setColour(DXLookNFeel::fillColour);
-    g.fillPath(p);
+    // Gradient fill for envelope area
+    {
+        ColourGradient envGrad(Colour(0xFF00B8D4).withAlpha(0.35f), 0.0f, 0.0f,
+                               Colour(0xFF00B8D4).withAlpha(0.05f), 0.0f, (float)h, false);
+        g.setGradientFill(envGrad);
+        g.fillPath(p);
+    }
+
+    // Draw the envelope line with glow
+    Path linePath;
+    linePath.startNewSubPath(0, h - h / 99.0 * levels[3]);
+    linePath.lineTo(d[0]*dw, h - h / 99.0 * levels[0]);
+    linePath.lineTo((d[0]+d[1])*dw, h - h / 99.0 * levels[1]);
+    linePath.lineTo((d[0]+d[1]+d[2])*dw, h - h / 99.0 * levels[2]);
+    linePath.lineTo(keyoff*dw, h - h / 99.0 * levels[2]);
+    linePath.lineTo((d[0]+d[1]+d[2]+keyoff+d[3])*dw, h - h / 99.0 * levels[3]);
+
+    // Outer glow
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.12f));
+    g.strokePath(linePath, PathStrokeType(3.0f));
+    // Inner line
+    g.setColour(Colour(0xFF00E5FF));
+    g.strokePath(linePath, PathStrokeType(1.0f));
+
+    // Draw position dots
+    g.setColour(Colour(0xFF00FFD0));
+    auto drawDot = [&](double dx, double dy, bool active) {
+        if (active) {
+            g.setColour(Colour(0xFF00FFD0));
+            g.fillEllipse((float)dx - 3.0f, (float)dy - 3.0f, 6.0f, 6.0f);
+        }
+    };
     
-    g.setColour(Colour(0xFFFFFFFF));
+    drawDot(0, h - h / 99.0 * levels[3], vPos == 0 || vPos == 1);
+    drawDot(d[0]*dw, h - h / 99.0 * levels[0], vPos == 1 || vPos == 2);
+    drawDot((d[0]+d[1])*dw, h - h / 99.0 * levels[1], vPos == 2 || vPos == 3);
+    drawDot((d[0]+d[1]+d[2])*dw, h - h / 99.0 * levels[2], vPos == 3 || vPos == 4);
+    drawDot(keyoff*dw, h - h / 99.0 * levels[2], vPos == 4);
+
+    // Position indicator text
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.6f));
     String len;
     len << ((int) vPos);
-    g.drawText(len, 5, 1, 72, 14, Justification::left, true);
+    g.setFont(Font(9.0f));
+    g.drawText(len, 3, 1, 72, 12, Justification::left, true);
 }
 
 PitchEnvDisplay::PitchEnvDisplay() {
@@ -255,8 +283,13 @@ PitchEnvDisplay::PitchEnvDisplay() {
 }
 
 void PitchEnvDisplay::paint(Graphics &g) {
-    g.setColour(Colours::white);
-    
+    int w = getWidth();
+    int h = getHeight();
+
+    // Background
+    g.setColour(Colour(0xFF040A12));
+    g.fillRoundedRectangle(0.0f, 0.0f, (float)w, (float)h, 2.0f);
+
     uint8_t *levels = pvalues + 4;
     uint8_t *rates = pvalues;
     
@@ -278,7 +311,7 @@ void PitchEnvDisplay::paint(Graphics &g) {
         total = 4;
     }
         
-    float ratio =  96 / total;
+    float ratio =  w / total;
 
     Path p;
     p.startNewSubPath(0, 32);
@@ -307,13 +340,26 @@ void PitchEnvDisplay::paint(Graphics &g) {
         dy = y;
     }
 
-    p.lineTo(96,32);
+    p.lineTo(w, 32);
     p.lineTo(0, 32);
-    g.setColour(DXLookNFeel::fillColour);
-    g.fillPath(p);
 
-    g.setColour(Colours::white);
-    g.fillEllipse(dx-2, dy-2, 4, 4);
+    // Gradient fill
+    {
+        ColourGradient envGrad(Colour(0xFF00B8D4).withAlpha(0.3f), 0.0f, 0.0f,
+                               Colour(0xFF00B8D4).withAlpha(0.05f), 0.0f, (float)h, false);
+        g.setGradientFill(envGrad);
+        g.fillPath(p);
+    }
+
+    // Glow stroke
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.1f));
+    g.strokePath(p, PathStrokeType(2.5f));
+    g.setColour(Colour(0xFF00E5FF));
+    g.strokePath(p, PathStrokeType(0.8f));
+
+    // Position dot
+    g.setColour(Colour(0xFF00FFD0));
+    g.fillEllipse(dx-3, dy-3, 6, 6);
 }
 /*
 void VuMeter::paint(Graphics &g) {
@@ -335,7 +381,7 @@ void VuMeter::paint(Graphics &g) {
 }
 */
 LcdDisplay::LcdDisplay() {
-    paramMsg = "DEXED " DEXED_VERSION;
+    paramMsg = "TAPSYNTH " DEXED_VERSION;
 }
 
 void LcdDisplay::setSystemMsg(String msg) {
@@ -343,10 +389,18 @@ void LcdDisplay::setSystemMsg(String msg) {
 }
 
 void LcdDisplay::paint(Graphics &g) {
-    g.fillAll(Colour(0xFF040C16));
-    g.setColour(Colour(0xFF1E90FF));
+    // Modern LCD background with rounded rect
+    g.setColour(Colour(0xFF040A14));
+    g.fillRoundedRectangle(0.0f, 0.0f, (float)getWidth(), (float)getHeight(), 2.0f);
+    
+    // Subtle border
+    g.setColour(Colour(0xFF00B8D4).withAlpha(0.15f));
+    g.drawRoundedRectangle(0.0f, 0.0f, (float)getWidth(), (float)getHeight(), 2.0f, 0.5f);
+    
+    // Text with glow
+    g.setColour(Colour(0xFF00E5FF));
     g.drawFittedText(paramMsg,
-                0, 0, 140, 14,
+                2, 0, getWidth() - 4, getHeight(),
                 Justification::centred, false);
 }
 
@@ -475,6 +529,6 @@ void ProgramSelector::paint(Graphics &g) {
     path.addTriangle(x-8, y/2-1, x-4, 2,   x, y/2-1);
     path.addTriangle(x-8, y/2+1, x-4, y-2, x, y/2+1);
     
-    g.setColour(Colours::white);
+    g.setColour(Colour(0xFF00E5A0));
     g.fillPath(path);
 }

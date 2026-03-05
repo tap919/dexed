@@ -38,14 +38,14 @@ void AlgoDisplay::displayOp(Graphics &g, char id, int x, int y, char link, char 
     y += 5;
     
     if ( opOn )
-        g.setColour(Colours::white);
+        g.setColour(Colour(0xFF00E5FF));
     else
         g.setColour(DXLookNFeel::roundBackground);
     
     g.drawText(t, x, y, 16, 12, Justification::centred, true);
     
     if ( opOn )
-        g.setColour(DXLookNFeel::fillColour);
+        g.setColour(Colour(0xFF00B8D4).withAlpha(0.7f));
     else
         g.setColour(DXLookNFeel::roundBackground);
     
@@ -115,9 +115,14 @@ void AlgoDisplay::displayOp(Graphics &g, char id, int x, int y, char link, char 
     
 }
 
-void AlgoDisplay::paint(Graphics &g) {    
-    g.setColour(DXLookNFeel::fillColour);
-    g.fillRect(1, 3, 20, 15);
+void AlgoDisplay::paint(Graphics &g) {
+    // Background
+    g.setColour(Colour(0xFF040A14));
+    g.fillRoundedRectangle(0.0f, 0.0f, (float)getWidth(), (float)getHeight(), 2.0f);
+
+    // Algorithm number badge
+    g.setColour(Colour(0xFF00B8D4).withAlpha(0.4f));
+    g.fillRoundedRectangle(1.0f, 3.0f, 20.0f, 15.0f, 2.0f);
     String n = String(*algo +1);
     
     g.setColour(Colours::white);

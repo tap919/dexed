@@ -158,24 +158,33 @@ void DexedAudioProcessorEditor::updateChorusButtons() {
 
 //==============================================================================
 void DexedAudioProcessorEditor::paint (Graphics& g) {
-    g.setColour(background);
-    g.fillRoundedRectangle(0.0f, 0.0f, (float) getWidth(), (float) getHeight(), 0);
+    // Main background
+    g.fillAll(Colour(0xFF050B14));
 
     // The paint() here is on the outer (scaled) container.
-    // The waveformVis strip background is painted by the component itself.
-    // Draw a yellow accent label for the CHORUS section header.
     float factor = processor->getZoomFactor();
     float stripY  = VIS_STRIP_Y  * factor;
     float stripH  = VIS_STRIP_H  * factor;
 
-    // Horizontal separator lines bordering the visualizer strip
-    g.setColour(Colour(0xFF00B8D4).withAlpha(0.3f));
-    g.drawHorizontalLine((int)stripY,        0.0f, (float)getWidth());
-    g.drawHorizontalLine((int)(stripY + stripH), 0.0f, (float)getWidth());
+    // Gradient separator lines bordering the visualizer strip
+    {
+        ColourGradient topLine(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, stripY,
+                               Colour(0xFF00B8D4).withAlpha(0.4f), getWidth() * 0.5f, stripY, false);
+        topLine.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(topLine);
+        g.fillRect(0.0f, stripY, (float)getWidth(), 1.5f);
+    }
+    {
+        ColourGradient botLine(Colour(0xFF00B8D4).withAlpha(0.0f), 0.0f, stripY + stripH,
+                               Colour(0xFF00B8D4).withAlpha(0.4f), getWidth() * 0.5f, stripY + stripH, false);
+        botLine.addColour(1.0, Colour(0xFF00B8D4).withAlpha(0.0f));
+        g.setGradientFill(botLine);
+        g.fillRect(0.0f, stripY + stripH - 0.5f, (float)getWidth(), 1.5f);
+    }
 
     // "CHORUS" label above the buttons
-    g.setColour(Colour(0xFF00E5A0).withAlpha(0.8f));
-    g.setFont(Font(9.5f, Font::bold));
+    g.setColour(Colour(0xFF00E5A0).withAlpha(0.7f));
+    g.setFont(Font(8.5f, Font::bold));
     g.drawText("JUNO CHORUS", (int)(706 * factor), (int)stripY, (int)(160 * factor), 14, Justification::centred, false);
 }
 
