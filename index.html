@@ -885,7 +885,9 @@
 
     /* ── Download helpers (generate placeholder SYX) ──────── */
     function generateSyx(bankName) {
-        // DX7 cartridge SYX = 4104 bytes: F0 43 00 09 20 00 [4096 voice data] checksum F7
+        // Generates a valid DX7 32-voice bulk dump (.syx) with generic init-voice data.
+        // These are placeholder/demonstration cartridges, not the actual curated patches.
+        // Format: F0 43 00 09 20 00 [4096 bytes = 32 × 128-byte voices] checksum F7
         var data = new Uint8Array(4104);
         data[0] = 0xF0; // SysEx start
         data[1] = 0x43; // Yamaha ID
@@ -938,8 +940,11 @@
             data[offset + 115] =  0; // LFO Amp Mod Depth
             data[offset + 116] =  1; // LFO Sync | Wave | Pitch Mod Sens
             data[offset + 117] = 24; // Transpose
-            // Patch name (10 ASCII chars)
-            var nameStr = (bankName + ' ' + (v + 1)).substring(0, 10);
+            // Patch name (10 ASCII chars) — truncate prefix so number always fits
+            var num = ('0' + (v + 1)).slice(-2); // zero-padded: 01–32
+            var prefix = bankName.substring(0, 7); // max 7 chars
+            var nameStr = (prefix + ' ' + num);    // e.g. "TpBass 01"
+            nameStr = nameStr.substring(0, 10);
             while (nameStr.length < 10) nameStr += ' ';
             for (var c = 0; c < 10; c++) {
                 data[offset + 118 + c] = nameStr.charCodeAt(c);
