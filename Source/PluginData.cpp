@@ -244,6 +244,10 @@ bool DexedAudioProcessor::loadStockBank(int bankIndex) {
         return false;
     }
     InputStream *is = builtin_pgm->createStreamForEntry(idx);
+    if (is == nullptr) {
+        delete builtin_pgm;
+        return false;
+    }
     Cartridge bank;
     bool ok = (bank.load(*is) != -1);
     delete is;
