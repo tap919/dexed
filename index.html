@@ -862,11 +862,27 @@
     }
 
     /* ── Category filter ──────────────────────────────────── */
+    function initCategoryFilterA11y() {
+        var container = document.getElementById('catFilters');
+        if (!container) return;
+        var pills = container.querySelectorAll('.cat-pill');
+        pills.forEach(function(p) {
+            var isActive = p.classList.contains('active');
+            p.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    }
+
+    initCategoryFilterA11y();
+
     document.getElementById('catFilters').addEventListener('click', function(e) {
         if (!e.target.classList.contains('cat-pill')) return;
         var pills = this.querySelectorAll('.cat-pill');
-        pills.forEach(function(p) { p.classList.remove('active'); });
+        pills.forEach(function(p) {
+            p.classList.remove('active');
+            p.setAttribute('aria-pressed', 'false');
+        });
         e.target.classList.add('active');
+        e.target.setAttribute('aria-pressed', 'true');
         renderPatches(e.target.getAttribute('data-cat'));
     });
 
