@@ -769,15 +769,17 @@ void DexedAudioProcessor::initCtrl() {
 
     // SVF parameters
     auto svfCutoffFmt = [](float v) -> String {
+        // SVF_MIN_HZ=40, SVF_RANGE_MUL=450 (same values as PluginFx::updateSvfCoeffs)
         float hz = 40.f * powf(450.f, v);
         if (hz < 1000.f)
             return String((int)hz) + " Hz";
         return String(hz / 1000.f, 1) + " kHz";
     };
     auto svfTypeFmt = [](float v) -> String {
-        if (v < 0.17f) return "OFF";
-        if (v < 0.50f) return "LP";
-        if (v < 0.83f) return "HP";
+        // Thresholds must match PluginFx::process() typeIdx logic (< 0.50 → LP, etc.)
+        if (v < PluginFx::SVF_TYPE_LP * 0.5f) return "OFF";
+        if (v < 0.50f)                         return "LP";
+        if (v < 0.83f)                         return "HP";
         return "BP";
     };
 

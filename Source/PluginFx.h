@@ -131,9 +131,19 @@ public:
     float uiEqHighGain;
 
     // State-Variable Filter (SVF)
+    // uiSvfCutoff: 0..1 maps to 40–18000 Hz (exponential)
+    // uiSvfReso:   0..1 (higher = more resonance; approaching 1 causes self-oscillation)
+    // uiSvfType:   uses the SVF_TYPE_* constants below
     float uiSvfCutoff;
     float uiSvfReso;
     float uiSvfType;
+
+    // Named constants for SVF type selection, shared between PluginFx and UI code.
+    // Values are chosen so that svfTypeFmt and the combo-box onChange handler agree.
+    static constexpr float SVF_TYPE_OFF = 0.00f;
+    static constexpr float SVF_TYPE_LP  = 0.33f;
+    static constexpr float SVF_TYPE_HP  = 0.67f;
+    static constexpr float SVF_TYPE_BP  = 1.00f;
 
     void init(int sampleRate);
     // Stereo-aware process: left[] is filtered in-place, right[] gets chorus-widened output

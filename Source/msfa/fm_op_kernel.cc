@@ -26,10 +26,6 @@
 #include "sin.h"
 #include "fm_op_kernel.h"
 
-// Persistent state for noise waveform; one global is fine since all noise ops
-// evolve the same RNG – they will diverge quickly due to different phase offsets.
-static uint32_t noiseState = 0x1234ABCDu;
-
 static inline int32_t waveformLookup(int32_t phase, uint8_t wf) {
     switch (wf) {
         default:
@@ -51,13 +47,14 @@ static inline int32_t waveformLookup(int32_t phase, uint8_t wf) {
                 return (1 << 24) - (p - (1 << 23)) * 4;
         }
         case 4: {
-            // Noise: xorshift32 with persistent state; mix in phase for per-operator
-            // decorrelation so that two operators using noise stay independent.
-            noiseState ^= noiseState << 13;
-            noiseState ^= noiseState >> 17;
-            noiseState ^= noiseState << 5;
-            noiseState += (uint32_t)phase;
-            return (int32_t)(noiseState >> 7);  // scale to ~24-bit output range
+            // Noise: stateless integer hash of the phase accumulator.
+            // Because each operator has a distinct phase and freq, operators stay
+            // decorrelated without any shared mutable state (thread-safe).
+            uint32_t h = (uint32_t)phase;
+            h ^= h >> 16;
+            h *= 0x45d9f3bu;
+            h ^= h >> 16;
+            return (int32_t)h >> 7;  // scale to ~24-bit output range
         }
     }
 }

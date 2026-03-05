@@ -173,7 +173,11 @@ void PluginFx::init(int sr) {
 
 // Recompute SVF coefficients from current UI values.
 void PluginFx::updateSvfCoeffs() {
-    float fc = 40.f * powf(450.f, uiSvfCutoff);
+    // SVF cutoff range: 40 Hz (ui=0) to 18000 Hz (ui=1).
+    // Uses exponential mapping: fc = SVF_MIN_HZ * (SVF_MAX_HZ/SVF_MIN_HZ)^ui
+    static const float SVF_MIN_HZ    = 40.f;
+    static const float SVF_RANGE_MUL = 450.f;  // 40 * 450 = 18000 Hz at ui=1
+    float fc = SVF_MIN_HZ * powf(SVF_RANGE_MUL, uiSvfCutoff);
     svfF = 2.f * sinf(juce::MathConstants<float>::pi * fc * sampleRateInv);
     svfF = jlimit(0.0001f, 0.9999f, svfF);
     float reso = jlimit(0.f, 0.999f, uiSvfReso);
@@ -441,12 +445,11 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
             updateSvfCoeffs();
         }
         // Map type value → mode (OFF is already excluded by the outer guard):
-        //   LP: uiSvfType in (0.01, 0.50)   set by combo value 0.33
-        //   HP: uiSvfType in [0.50, 0.83)   set by combo value 0.67
-        //   BP: uiSvfType >= 0.83            set by combo value 1.0
-        // (matches svfTypeFmt thresholds in PluginParam.cpp)
+        //   LP: uiSvfType in (SVF_TYPE_OFF, 0.50)
+        //   HP: uiSvfType in [0.50, 0.83)
+        //   BP: uiSvfType >= 0.83
         int typeIdx;
-        if (uiSvfType < 0.50f)      typeIdx = 0;  // LP
+        if      (uiSvfType < 0.50f) typeIdx = 0;  // LP
         else if (uiSvfType < 0.83f) typeIdx = 1;  // HP
         else                        typeIdx = 2;  // BP
         float f = svfF;

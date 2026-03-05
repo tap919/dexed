@@ -19,6 +19,7 @@
 
 //[Headers] You can add your own extra header files here...
 #include "PluginEditor.h"
+#include "PluginFx.h"
 #include "DXLookNFeel.h"
 //[/Headers]
 
@@ -998,12 +999,12 @@ void GlobalEditor::bind(DexedAudioProcessorEditor *edit) {
     processor->svfReso->bind(svfResoSlider.get());
     svfTypeCombo->onChange = [this] {
         int id = svfTypeCombo->getSelectedId();
-        float v = 0.f;
+        float v;
         switch (id) {
-            case 1: v = 0.0f;  break; // OFF
-            case 2: v = 0.33f; break; // LP
-            case 3: v = 0.67f; break; // HP
-            case 4: v = 1.0f;  break; // BP
+            case 2:  v = PluginFx::SVF_TYPE_LP;  break; // LP
+            case 3:  v = PluginFx::SVF_TYPE_HP;  break; // HP
+            case 4:  v = PluginFx::SVF_TYPE_BP;  break; // BP
+            default: v = PluginFx::SVF_TYPE_OFF; break; // OFF
         }
         processor->svfType->publishValue(v);
     };

@@ -297,7 +297,8 @@ void Dx7Note::compute(int32_t *buf, int32_t lfo_val, int32_t lfo_delay, const Co
         if ( ctrls->opSwitch[op] == '0' )  {
             env_[op].getsample(); // advance the envelop even if it is not playing
             params_[op].level_in = 0;
-            params_[op].waveform = 0;
+            // Preserve waveform so toggling an op off/on doesn't reset the user's choice
+            params_[op].waveform = ctrls->opWaveform[op];
         } else {
             int32_t basepitch = basepitch_[op];
 

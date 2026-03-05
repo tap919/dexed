@@ -347,17 +347,27 @@ void DexedAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& mi
 
     // Stereo-aware fx processing (includes Juno chorus when enabled)
     {
+        // Macro scaling factors (additive offsets applied temporarily around fx.process):
+        // Warmth  lowers cutoff up to 35% of the full range, and boosts low EQ by 20%.
+        // Brightness raises cutoff up to 30% and boosts high EQ by 15%.
+        // Pad     multiplies output gain by up to 1.5× (50% boost at macro=1).
+        static const float kWarmthCutoffScale   = 0.35f;
+        static const float kBrightnessCutoffScale = 0.30f;
+        static const float kWarmthEqLowScale    = 0.20f;
+        static const float kBrightnessEqHighScale = 0.15f;
+        static const float kPadGainScale        = 0.50f;
+
         float savedCutoff    = fx.uiCutoff;
         float savedEqLow     = fx.uiEqLowGain;
         float savedEqHigh    = fx.uiEqHighGain;
         float savedGain      = fx.uiGain;
 
         fx.uiCutoff   = jlimit(0.f, 1.f, fx.uiCutoff
-                                - uiMacroWarmth     * 0.35f
-                                + uiMacroBrightness * 0.30f);
-        fx.uiEqLowGain  = jlimit(0.f, 1.f, fx.uiEqLowGain  + uiMacroWarmth     * 0.20f);
-        fx.uiEqHighGain = jlimit(0.f, 1.f, fx.uiEqHighGain + uiMacroBrightness * 0.15f);
-        fx.uiGain       = jlimit(0.f, 2.f, fx.uiGain * (1.f + uiMacroPad * 0.50f));
+                                - uiMacroWarmth     * kWarmthCutoffScale
+                                + uiMacroBrightness * kBrightnessCutoffScale);
+        fx.uiEqLowGain  = jlimit(0.f, 1.f, fx.uiEqLowGain  + uiMacroWarmth     * kWarmthEqLowScale);
+        fx.uiEqHighGain = jlimit(0.f, 1.f, fx.uiEqHighGain + uiMacroBrightness * kBrightnessEqHighScale);
+        fx.uiGain       = jlimit(0.f, 2.f, fx.uiGain * (1.f + uiMacroPad * kPadGainScale));
 
         if ( buffer.getNumChannels() > 1 ) {
             float *rightData = buffer.getWritePointer(1);
