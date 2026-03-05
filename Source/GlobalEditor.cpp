@@ -444,6 +444,7 @@ GlobalEditor::GlobalEditor ()
     drift->setSliderStyle(juce::Slider::RotaryVerticalDrag);
     drift->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
     drift->addListener(this);
+    drift->setDoubleClickReturnValue(true, 0.0);
     drift->setBounds(20, 154, 34, 34);
 
     saturation.reset(new DXSlider("saturation"));
@@ -452,6 +453,7 @@ GlobalEditor::GlobalEditor ()
     saturation->setSliderStyle(juce::Slider::RotaryVerticalDrag);
     saturation->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
     saturation->addListener(this);
+    saturation->setDoubleClickReturnValue(true, 0.0);
     saturation->setBounds(74, 154, 34, 34);
 
     reverseBtn.reset(new juce::ToggleButton("reverseBtn"));
@@ -465,6 +467,7 @@ GlobalEditor::GlobalEditor ()
     eqLow->setSliderStyle(juce::Slider::RotaryVerticalDrag);
     eqLow->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
     eqLow->addListener(this);
+    eqLow->setDoubleClickReturnValue(true, 0.5);
     eqLow->setBounds(210, 154, 34, 34);
 
     eqLowMid.reset(new DXSlider("eqLowMid"));
@@ -473,6 +476,7 @@ GlobalEditor::GlobalEditor ()
     eqLowMid->setSliderStyle(juce::Slider::RotaryVerticalDrag);
     eqLowMid->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
     eqLowMid->addListener(this);
+    eqLowMid->setDoubleClickReturnValue(true, 0.5);
     eqLowMid->setBounds(258, 154, 34, 34);
 
     eqHighMid.reset(new DXSlider("eqHighMid"));
@@ -481,6 +485,7 @@ GlobalEditor::GlobalEditor ()
     eqHighMid->setSliderStyle(juce::Slider::RotaryVerticalDrag);
     eqHighMid->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
     eqHighMid->addListener(this);
+    eqHighMid->setDoubleClickReturnValue(true, 0.5);
     eqHighMid->setBounds(306, 154, 34, 34);
 
     eqHigh.reset(new DXSlider("eqHigh"));
@@ -489,6 +494,7 @@ GlobalEditor::GlobalEditor ()
     eqHigh->setSliderStyle(juce::Slider::RotaryVerticalDrag);
     eqHigh->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
     eqHigh->addListener(this);
+    eqHigh->setDoubleClickReturnValue(true, 0.5);
     eqHigh->setBounds(354, 154, 34, 34);
 
 
