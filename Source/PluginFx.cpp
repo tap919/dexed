@@ -440,7 +440,11 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
         if (uiSvfCutoff != pSvfCutoff || uiSvfReso != pSvfReso) {
             updateSvfCoeffs();
         }
-        // Map type: OFF<0.17, LP=0.17..0.50, HP=0.50..0.83, BP>=0.83 (matches svfTypeFmt in PluginParam.cpp)
+        // Map type value → mode (OFF is already excluded by the outer guard):
+        //   LP: uiSvfType in (0.01, 0.50)   set by combo value 0.33
+        //   HP: uiSvfType in [0.50, 0.83)   set by combo value 0.67
+        //   BP: uiSvfType >= 0.83            set by combo value 1.0
+        // (matches svfTypeFmt thresholds in PluginParam.cpp)
         int typeIdx;
         if (uiSvfType < 0.50f)      typeIdx = 0;  // LP
         else if (uiSvfType < 0.83f) typeIdx = 1;  // HP
