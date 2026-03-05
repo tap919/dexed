@@ -90,8 +90,9 @@ DXLookNFeel::DXLookNFeel() {
     DexedAudioProcessor::dexedAppDir.setAsCurrentWorkingDirectory();
     ctrlBackground = Colour(0xFF0A1220);
 
-    // WARNING! If you modify the colour IDs here, please actualize the file ''DexedTheme.md'' 
-    // in the subdirectory ``~/dexed/Documentation/``    
+    // WARNING! If you modify the colour IDs here, please keep the theme definition
+    // in ``TapSynthTheme.xml`` (and any legacy ``DexedTheme.xml``) and the docs under
+    // ``~/TapSynth/Documentation/`` in sync.
 
     REG_COLOUR(TextButton::buttonColourId,Colour(0xFF00E5A0));
     REG_COLOUR(TextButton::textColourOnId, Colour(0xFF0A0E14));
