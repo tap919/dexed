@@ -135,10 +135,14 @@ DXLookNFeel::DXLookNFeel() {
     imageGlobal = ImageCache::getFromMemory (BinaryData::GlobalEditor_1728x288_png, BinaryData::GlobalEditor_1728x288_pngSize); // 2x
 
     //---
-    // load and parse the file ``DexedTheme.xml``
+    // load and parse the file ``TapSynthTheme.xml`` (also checks ``DexedTheme.xml`` for backward compatibility)
     //---
 
-    File dexedTheme = DexedAudioProcessor::dexedAppDir.getChildFile("DexedTheme.xml");
+    File dexedTheme = DexedAudioProcessor::dexedAppDir.getChildFile("TapSynthTheme.xml");
+    if ( ! dexedTheme.existsAsFile() ) {
+        // Backward compatibility: fall back to legacy theme file name
+        dexedTheme = DexedAudioProcessor::dexedAppDir.getChildFile("DexedTheme.xml");
+    }
 
     if ( ! dexedTheme.existsAsFile() ) {
         TRACE("file \"%s\" does not exists", dexedTheme.getFullPathName().toRawUTF8());

@@ -307,7 +307,7 @@ void DexedAudioProcessorEditor::parmShow() {
                                };
     param->setGeneralCallback(generalCallback);
 
-    dexedParameterDialog = std::make_unique<DexedDialogWindow>("dexed Parameters", Colour(0xFF323E44));
+    dexedParameterDialog = std::make_unique<DexedDialogWindow>("TapSynth Parameters", Colour(0xFF323E44));
     dexedParameterDialog->setContentOwned(param, true);
     frameComponent.addAndMakeVisible(dexedParameterDialog.get());
     dexedParameterDialog->centreAroundComponent(&frameComponent, param->getWidth(), param->getHeight() + dexedParameterDialog->getTitleBarHeight());

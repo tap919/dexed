@@ -78,7 +78,7 @@ public:
     std::unique_ptr<juce::HyperlinkButton> dexed; // changed to std::unique_ptr from juce::ScopedPointer
     std::unique_ptr<juce::HyperlinkButton> surge; // changed to std::unique_ptr from juce::ScopedPointer
 
-    AboutBox() : DialogWindow("About", Colour(0xFF000000), true),
+    AboutBox() : DialogWindow("About TapSynth", Colour(0xFF000000), true),
         dexed(std::make_unique<juce::HyperlinkButton>("https://asb2m10.github.io/dexed/", URL("https://asb2m10.github.io/dexed/"))),
         surge(std::make_unique<juce::HyperlinkButton>("https://surge-synthesizer.github.io/", URL("https://surge-synthesizer.github.io/")))
     {
@@ -115,11 +115,11 @@ public:
                      0, 0, logo_png.getWidth(), logo_png.getHeight());
         g.setFont(20);
         g.setColour(Colour(0xFFFFFFFF));
-        const char *credits = "Version " DEXED_VERSION " build date: " __DATE__ "\n"
+        const char *credits = "TapSynth " DEXED_VERSION " build date: " __DATE__ "\n"
                             "This software is released under the GPL V3\n\n"
-                            "DSP Engine: orignal project (msfa) Raph Levin, enhancements Pascal Gauthier\n"
-                            "UI Programming: Pascal Gauthier\n"
-                            "UI Design: AZur Studio\n\n"
+                            "Based on Dexed by Pascal Gauthier\n"
+                            "DSP Engine: original project (msfa) Raph Levin, enhancements Pascal Gauthier\n"
+                            "UI Design: TapSynth Team\n\n"
                             "Credits to Surge Synthesizer Team for MPE and microtuning support\n"
                             "Credits to GitHub users: tico-tico, Sentinel77, jeremybernstein; filters based on OB-Xd";
         g.drawMultiLineText(credits, 18, 260, logo_png.getWidth()-18);
@@ -521,7 +521,7 @@ GlobalEditor::GlobalEditor ()
     setTitle("Global Parameters");
     setFocusContainerType(FocusContainerType::focusContainer);
     setWantsKeyboardFocus(true);
-    aboutButton->setTitle("About DEXED");
+    aboutButton->setTitle("About TapSynth");
     //[/Constructor]
 }
 

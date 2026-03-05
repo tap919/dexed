@@ -1,33 +1,15 @@
-Dexed - FM Plugin Synth
-=======================
+TapSynth - Modern FM Synthesizer
+==================================
 
-Please see [Dexed User Website](https://asb2m10.github.io/dexed) for user and download information.
+TapSynth is a modern FM synthesizer built on the Dexed/DX7 engine. It features a modernized UI with
+a waveform visualizer, Juno-style chorus, drift/saturation effects, 4-band EQ, and a sound bank maker
+with 3 stock banks (Analog Classics, Digital Textures, Ambient Pads).
 
-Dexed is a multi-platform, multi format plugin synth that is closely modeled on the Yamaha DX7.
 Under the hood it uses [music-synthesizer-for-android](https://github.com/google/music-synthesizer-for-android)
 for the synth engine and [JUCE](https://www.juce.com) as an application/plugin wrapper.
 
-The goal of this project is to be a tool/companion for the original DX7. Sound engine
-with 'float' value parameters, different waveform à la TX81z would be great but anything that
-goes beyond the DX7 should and will be a fork of this project. This is to keep the compatibility with
-the original machine.
-
-Dexed is licensed on the GPL v3. The msfa component (acronym for music synthesizer for android, see msfa
+TapSynth is licensed on the GPL v3. The msfa component (acronym for music synthesizer for android, see msfa
 in the source folder) stays on the Apache 2.0 license to be able to collaborate between projects.
-
-Pre-release builds are available with the [Nightly Releases](https://github.com/asb2m10/dexed/releases/tag/Nightly)
-
-Donation
---------
-As a maintainer of this 10-year-old project, donations are welcomed. This also applies for the Apple users 
-to cover for the notarization of this software in the coming years. Thank you!
-
-https://www.paypal.com/paypalme/asb2m10
-
-Dexed Forks
------------
- * [MiniDexed](https://github.com/probonopd/MiniDexed) Run a DX7 bare metal from a Raspberry Pi
- * [SIMD-optimized](https://github.com/risicle/dexed/tree/ris-highway) CPU optimized version with [highway](https://github.com/google/highway/tree/master)
 
 Changelog
 ---------
