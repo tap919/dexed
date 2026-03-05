@@ -976,7 +976,7 @@
             // Patch name (10 ASCII chars) — truncate prefix so number always fits
             var num = ('0' + (v + 1)).slice(-2); // zero-padded: 01–32
             var prefix = bankName.substring(0, 7); // max 7 chars
-            var nameStr = (prefix + ' ' + num);    // e.g. "TpBass 01"
+            var nameStr = (prefix + ' ' + num);    // e.g. "TapBass 01"
             nameStr = nameStr.substring(0, 10);
             while (nameStr.length < 10) nameStr += ' ';
             for (var c = 0; c < 10; c++) {
