@@ -1009,6 +1009,21 @@ void GlobalEditor::bind(DexedAudioProcessorEditor *edit) {
         processor->svfType->publishValue(v);
     };
 
+    // Initialize the SVF type ComboBox from the current processor value
+    {
+        const float v = processor->svfType->getValue();
+        int id;
+        if (v == PluginFx::SVF_TYPE_LP)
+            id = 2; // LP
+        else if (v == PluginFx::SVF_TYPE_HP)
+            id = 3; // HP
+        else if (v == PluginFx::SVF_TYPE_BP)
+            id = 4; // BP
+        else
+            id = 1; // OFF / default
+
+        svfTypeCombo->setSelectedId(id, juce::NotificationType::dontSendNotification);
+    }
     algoDisplay->algo = (char *) &(processor->data[134]);
     pitchEnvDisplay->pvalues = &(processor->data[126]);
 
