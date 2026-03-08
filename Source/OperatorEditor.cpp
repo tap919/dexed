@@ -623,6 +623,12 @@ void OperatorEditor::bind(DexedAudioProcessor *parent, int op) {
     parent->opCtrl[op].opSwitch->bind(opSwitch.get());
     parent->opCtrl[op].waveform->bind(waveformCombo.get());
 
+    // Ensure waveform ComboBox reflects the current controller value
+    if (auto* waveformCtrl = parent->opCtrl[op].waveform.get())
+    {
+        const int waveformIndex = static_cast<int> (std::round (waveformCtrl->get()));
+        waveformCombo->setSelectedItemIndex (waveformIndex, dontSendNotification);
+    }
     int offset = parent->opCtrl[op].egRate[0]->getOffset();
     envDisplay->pvalues = &(parent->data[offset]);
     processor = parent;
