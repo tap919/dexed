@@ -105,12 +105,19 @@ public:
     FmMod foot;
     FmMod breath;
     FmMod at;
-    
+
+    // Macro controls (0..1 range, set from PluginProcessor)
+    float blowMacro;       // 0..1 → additional feedback (added on top of DX7 patch feedback)
+
+    uint8_t opWaveform[6];  // per-operator waveform: 0=sine, 1=saw, 2=square, 3=triangle, 4=noise
+
     Controllers() {
         amp_mod = 0;
         pitch_mod = 0;
         eg_mod = 0;
-        strcpy(opSwitch, "111111");        
+        strcpy(opSwitch, "111111");
+        blowMacro = 0.f;
+        memset(opWaveform, 0, sizeof(opWaveform));
     }
 
     void refresh() {

@@ -111,6 +111,9 @@ PluginFx::PluginFx() {
     uiEqHighMidGain = 0.5f;
     uiEqHighGain    = 0.5f;
     for (int i = 0; i < 4; i++) pEqGain[i] = 0.5f;
+    uiSvfCutoff = 1.0f;
+    uiSvfReso   = 0.0f;
+    uiSvfType   = 0.0f;
 }
 
 void PluginFx::init(int sr) {
@@ -160,11 +163,32 @@ void PluginFx::init(int sr) {
     revWritePos = 0;
     memset(revBufL, 0, sizeof(revBufL));
     memset(revBufR, 0, sizeof(revBufR));
+
+    // SVF state
+    svfBP = svfLP = svfBPR = svfLPR = 0.f;
+    pSvfCutoff = -1.f;
+    pSvfReso   = -1.f;
+    svfF = svfQ = 0.f;
+}
+
+// Recompute SVF coefficients from current UI values.
+void PluginFx::updateSvfCoeffs() {
+    // SVF cutoff range: 40 Hz (ui=0) to 18000 Hz (ui=1).
+    // Uses exponential mapping: fc = SVF_MIN_HZ * (SVF_MAX_HZ/SVF_MIN_HZ)^ui
+    static const float SVF_MIN_HZ    = 40.f;
+    static const float SVF_RANGE_MUL = 450.f;  // 40 * 450 = 18000 Hz at ui=1
+    float fc = SVF_MIN_HZ * powf(SVF_RANGE_MUL, uiSvfCutoff);
+    svfF = 2.f * sinf(juce::MathConstants<float>::pi * fc * sampleRateInv);
+    svfF = jlimit(0.0001f, 0.9999f, svfF);
+    float reso = jlimit(0.f, 0.999f, uiSvfReso);
+    svfQ = 2.f - reso * 1.9f;
+    pSvfCutoff = uiSvfCutoff;
+    pSvfReso   = uiSvfReso;
 }
 
 // Recompute EQ biquad coefficients when gain values change.
-// Band centres: 100 Hz (low shelf), 500 Hz (peak), 3000 Hz (peak), 8000 Hz (high shelf)
 void PluginFx::updateEqCoeffs() {
+    // Band centres: 100 Hz (low shelf), 500 Hz (peak), 3000 Hz (peak), 8000 Hz (high shelf)
     const float centres[4] = { 100.f, 500.f, 3000.f, 8000.f };
     // Q = 1/sqrt(2) gives a Butterworth (maximally-flat) response for the peak bands.
     const float Q = 0.7071f;
@@ -411,6 +435,45 @@ void PluginFx::process(float *left, float *right, int sampleSize) {
             if (revWritePos >= REVERSE_SEG) {
                 revWriteBuf = 1 - revWriteBuf;
                 revWritePos = 0;
+            }
+        }
+    }
+
+    // ---- State-Variable Filter (SVF) ----
+    if (uiSvfType > 0.01f) {
+        if (uiSvfCutoff != pSvfCutoff || uiSvfReso != pSvfReso) {
+            updateSvfCoeffs();
+        }
+        // Map type value → mode (OFF is already excluded by the outer guard):
+        //   LP: uiSvfType in (SVF_TYPE_OFF, 0.50)
+        //   HP: uiSvfType in [0.50, 0.83)
+        //   BP: uiSvfType >= 0.83
+        int typeIdx;
+        if      (uiSvfType < 0.50f) typeIdx = 0;  // LP
+        else if (uiSvfType < 0.83f) typeIdx = 1;  // HP
+        else                        typeIdx = 2;  // BP
+        float f = svfF;
+        float q = svfQ;
+        float *bpL = &svfBP, *lpL = &svfLP;
+        for (int i = 0; i < sampleSize; i++) {
+            float hp = left[i] - q * (*bpL) - (*lpL);
+            *bpL = f * hp + (*bpL);
+            *lpL = f * (*bpL) + (*lpL);
+            switch (typeIdx) {
+                case 0: left[i] = *lpL; break;
+                case 1: left[i] = hp;   break;
+                default: left[i] = *bpL; break;
+            }
+        }
+        float *bpR = &svfBPR, *lpR = &svfLPR;
+        for (int i = 0; i < sampleSize; i++) {
+            float hp = right[i] - q * (*bpR) - (*lpR);
+            *bpR = f * hp + (*bpR);
+            *lpR = f * (*bpR) + (*lpR);
+            switch (typeIdx) {
+                case 0: right[i] = *lpR; break;
+                case 1: right[i] = hp;   break;
+                default: right[i] = *bpR; break;
             }
         }
     }

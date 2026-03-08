@@ -194,6 +194,24 @@ public :
     std::unique_ptr<Ctrl> tune;
     std::unique_ptr<Ctrl> monoModeCtrl;
 
+    // Macro performance controls (0..1 range)
+    float uiMacroWarmth;
+    float uiMacroBlow;
+    float uiMacroBrightness;
+    float uiMacroPad;
+
+    std::unique_ptr<CtrlFloat> macroWarmth;
+    std::unique_ptr<CtrlFloat> macroBlow;
+    std::unique_ptr<CtrlFloat> macroBrightness;
+    std::unique_ptr<CtrlFloat> macroPad;
+
+    // SVF filter parameters
+    std::unique_ptr<CtrlFloat> svfCutoff;
+    std::unique_ptr<CtrlFloat> svfReso;
+    std::unique_ptr<CtrlFloat> svfType;
+
+    float opWaveformF[6];   // 0..1 float storage for per-op waveform (discretized to 0..4)
+
     void loadCartridge(Cartridge &cart);
     void setDxValue(int offset, int v);
 
