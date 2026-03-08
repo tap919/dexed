@@ -731,6 +731,66 @@ void DexedAudioProcessor::initCtrl() {
         opCtrl[opVal].opSwitch.reset(new CtrlOpSwitch(opSwitchLabel, (char *)&(controllers.opSwitch)+(5-i), this));
         ctrl.add(opCtrl[opVal].opSwitch.get());
     }
+
+    // Per-operator waveform
+    auto waveformFmt = [](float v) -> String {
+        int w = roundToInt(v * 4.f);
+        const char* names[] = {"SINE", "SAW", "SQUARE", "TRI", "NOISE"};
+        return String(names[jlimit(0, 4, w)]);
+    };
+    for (int op = 0; op < 6; op++) {
+        opWaveformF[op] = 0.f;
+        opCtrl[op].waveform.reset(new CtrlFloat(
+            String("OP") + String(op+1) + " WAVEFORM", &opWaveformF[op], waveformFmt));
+        ctrl.add(opCtrl[op].waveform.get());
+    }
+
+    // Macro performance controls
+    auto macroFmt = [](float v) -> String {
+        return String(roundToInt(v * 100)) + "%";
+    };
+
+    uiMacroWarmth = 0.f;
+    uiMacroBlow = 0.f;
+    uiMacroBrightness = 0.f;
+    uiMacroPad = 0.f;
+
+    macroWarmth.reset(new CtrlFloat("Warmth", &uiMacroWarmth, macroFmt));
+    ctrl.add(macroWarmth.get());
+
+    macroBlow.reset(new CtrlFloat("Blow", &uiMacroBlow, macroFmt));
+    ctrl.add(macroBlow.get());
+
+    macroBrightness.reset(new CtrlFloat("Brightness", &uiMacroBrightness, macroFmt));
+    ctrl.add(macroBrightness.get());
+
+    macroPad.reset(new CtrlFloat("Pad", &uiMacroPad, macroFmt));
+    ctrl.add(macroPad.get());
+
+    // SVF parameters
+    auto svfCutoffFmt = [](float v) -> String {
+        // SVF_MIN_HZ=40, SVF_RANGE_MUL=450 (same values as PluginFx::updateSvfCoeffs)
+        float hz = 40.f * powf(450.f, v);
+        if (hz < 1000.f)
+            return String((int)hz) + " Hz";
+        return String(hz / 1000.f, 1) + " kHz";
+    };
+    auto svfTypeFmt = [](float v) -> String {
+        // Thresholds must match PluginFx::process() typeIdx logic (< 0.50 → LP, etc.)
+        if (v < PluginFx::SVF_TYPE_LP * 0.5f) return "OFF";
+        if (v < 0.50f)                         return "LP";
+        if (v < 0.83f)                         return "HP";
+        return "BP";
+    };
+
+    svfCutoff.reset(new CtrlFloat("SVF Cutoff", &fx.uiSvfCutoff, svfCutoffFmt));
+    ctrl.add(svfCutoff.get());
+
+    svfReso.reset(new CtrlFloat("SVF Reso", &fx.uiSvfReso));
+    ctrl.add(svfReso.get());
+
+    svfType.reset(new CtrlFloat("SVF Type", &fx.uiSvfType, svfTypeFmt));
+    ctrl.add(svfType.get());
     
     for (int i=0; i < ctrl.size(); i++) {
         ctrl[i]->idx = i;

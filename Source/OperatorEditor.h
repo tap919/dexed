@@ -99,6 +99,7 @@ private:
     std::unique_ptr<juce::ToggleButton> opMode;
     std::unique_ptr<ComboBoxImage> kbdLeftCurve;
     std::unique_ptr<ComboBoxImage> kbdRightCurve;
+    std::unique_ptr<juce::ComboBox> waveformCombo;
 
 
     //==============================================================================

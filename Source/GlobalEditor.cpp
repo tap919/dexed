@@ -19,6 +19,7 @@
 
 //[Headers] You can add your own extra header files here...
 #include "PluginEditor.h"
+#include "PluginFx.h"
 #include "DXLookNFeel.h"
 //[/Headers]
 
@@ -515,6 +516,69 @@ GlobalEditor::GlobalEditor ()
         }
     };
 
+    // Macro performance controls
+    macroWarmth.reset(new DXSlider("macroWarmth"));
+    addAndMakeVisible(macroWarmth.get());
+    macroWarmth->setRange(0, 1, 0);
+    macroWarmth->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    macroWarmth->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    macroWarmth->addListener(this);
+    macroWarmth->setDoubleClickReturnValue(true, 0.0);
+    macroWarmth->setBounds(582, 154, 34, 34);
+
+    macroBlow.reset(new DXSlider("macroBlow"));
+    addAndMakeVisible(macroBlow.get());
+    macroBlow->setRange(0, 1, 0);
+    macroBlow->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    macroBlow->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    macroBlow->addListener(this);
+    macroBlow->setDoubleClickReturnValue(true, 0.0);
+    macroBlow->setBounds(622, 154, 34, 34);
+
+    macroBrightness.reset(new DXSlider("macroBrightness"));
+    addAndMakeVisible(macroBrightness.get());
+    macroBrightness->setRange(0, 1, 0);
+    macroBrightness->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    macroBrightness->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    macroBrightness->addListener(this);
+    macroBrightness->setDoubleClickReturnValue(true, 0.0);
+    macroBrightness->setBounds(662, 154, 34, 34);
+
+    macroPad.reset(new DXSlider("macroPad"));
+    addAndMakeVisible(macroPad.get());
+    macroPad->setRange(0, 1, 0);
+    macroPad->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    macroPad->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    macroPad->addListener(this);
+    macroPad->setDoubleClickReturnValue(true, 0.0);
+    macroPad->setBounds(702, 154, 34, 34);
+
+    svfCutoffSlider.reset(new DXSlider("svfCutoff"));
+    addAndMakeVisible(svfCutoffSlider.get());
+    svfCutoffSlider->setRange(0, 1, 0);
+    svfCutoffSlider->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    svfCutoffSlider->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    svfCutoffSlider->addListener(this);
+    svfCutoffSlider->setDoubleClickReturnValue(true, 1.0);
+    svfCutoffSlider->setBounds(746, 154, 34, 34);
+
+    svfResoSlider.reset(new DXSlider("svfReso"));
+    addAndMakeVisible(svfResoSlider.get());
+    svfResoSlider->setRange(0, 1, 0);
+    svfResoSlider->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    svfResoSlider->setTextBoxStyle(juce::Slider::NoTextBox, false, 80, 20);
+    svfResoSlider->addListener(this);
+    svfResoSlider->setDoubleClickReturnValue(true, 0.0);
+    svfResoSlider->setBounds(786, 154, 34, 34);
+
+    svfTypeCombo.reset(new juce::ComboBox("svfType"));
+    addAndMakeVisible(svfTypeCombo.get());
+    svfTypeCombo->addItem("OFF", 1);
+    svfTypeCombo->addItem("LP",  2);
+    svfTypeCombo->addItem("HP",  3);
+    svfTypeCombo->addItem("BP",  4);
+    svfTypeCombo->setSelectedId(1, dontSendNotification);
+    svfTypeCombo->setBounds(824, 160, 36, 22);
 
     //[UserPreSize]
     //[/UserPreSize]
@@ -590,6 +654,13 @@ GlobalEditor::~GlobalEditor()
     eqHighMid = nullptr;
     eqHigh = nullptr;
     bankSelector = nullptr;
+    macroWarmth     = nullptr;
+    macroBlow       = nullptr;
+    macroBrightness = nullptr;
+    macroPad        = nullptr;
+    svfCutoffSlider = nullptr;
+    svfResoSlider   = nullptr;
+    svfTypeCombo    = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
@@ -668,6 +739,8 @@ void GlobalEditor::paint (juce::Graphics& g)
     g.drawText("REVERSE",   108, 207, 60,  12, Justification::centred, false);
     g.drawText("4-BAND EQ", 190, 207, 210, 12, Justification::centred, false);
     g.drawText("STOCK BANK",420, 207, 170, 12, Justification::centred, false);
+    g.drawText("MACROS",    570, 207, 180, 12, Justification::centred, false);
+    g.drawText("SVF FILTER",736, 207, 128, 12, Justification::centred, false);
 
     // Sub-labels for EQ bands
     g.setFont(Font(7.5f));
@@ -676,6 +749,13 @@ void GlobalEditor::paint (juce::Graphics& g)
     g.drawText("L-MID",  248, 194, 42, 10, Justification::centred, false);
     g.drawText("H-MID",  296, 194, 42, 10, Justification::centred, false);
     g.drawText("HIGH",   344, 194, 42, 10, Justification::centred, false);
+    g.drawText("WARM",   572, 194, 50, 10, Justification::centred, false);
+    g.drawText("BLOW",   612, 194, 50, 10, Justification::centred, false);
+    g.drawText("BRITE",  652, 194, 50, 10, Justification::centred, false);
+    g.drawText("PAD",    692, 194, 50, 10, Justification::centred, false);
+    g.drawText("FREQ",   736, 194, 50, 10, Justification::centred, false);
+    g.drawText("RESO",   776, 194, 50, 10, Justification::centred, false);
+    g.drawText("MODE",   814, 194, 50, 10, Justification::centred, false);
     //[/UserPrePaint]
 
     //[UserPaint] Add your own custom painting code here..
@@ -911,6 +991,39 @@ void GlobalEditor::bind(DexedAudioProcessorEditor *edit) {
     processor->fxEqHigh->bind(eqHigh.get());
     processor->fxReverse->bind(reverseBtn.get());
 
+    processor->macroWarmth->bind(macroWarmth.get());
+    processor->macroBlow->bind(macroBlow.get());
+    processor->macroBrightness->bind(macroBrightness.get());
+    processor->macroPad->bind(macroPad.get());
+    processor->svfCutoff->bind(svfCutoffSlider.get());
+    processor->svfReso->bind(svfResoSlider.get());
+    svfTypeCombo->onChange = [this] {
+        int id = svfTypeCombo->getSelectedId();
+        float v;
+        switch (id) {
+            case 2:  v = PluginFx::SVF_TYPE_LP;  break; // LP
+            case 3:  v = PluginFx::SVF_TYPE_HP;  break; // HP
+            case 4:  v = PluginFx::SVF_TYPE_BP;  break; // BP
+            default: v = PluginFx::SVF_TYPE_OFF; break; // OFF
+        }
+        processor->svfType->publishValue(v);
+    };
+
+    // Initialize the SVF type ComboBox from the current processor value
+    {
+        const float v = processor->svfType->getValue();
+        int id;
+        if (v == PluginFx::SVF_TYPE_LP)
+            id = 2; // LP
+        else if (v == PluginFx::SVF_TYPE_HP)
+            id = 3; // HP
+        else if (v == PluginFx::SVF_TYPE_BP)
+            id = 4; // BP
+        else
+            id = 1; // OFF / default
+
+        svfTypeCombo->setSelectedId(id, juce::NotificationType::dontSendNotification);
+    }
     algoDisplay->algo = (char *) &(processor->data[134]);
     pitchEnvDisplay->pvalues = &(processor->data[126]);
 

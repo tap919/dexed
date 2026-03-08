@@ -136,6 +136,17 @@ private:
     // Stock bank selector (3 banks: Analog Classics, Digital Textures, Ambient Pads)
     std::unique_ptr<juce::ComboBox> bankSelector;
 
+    // Macro performance controls
+    std::unique_ptr<juce::Slider> macroWarmth;
+    std::unique_ptr<juce::Slider> macroBlow;
+    std::unique_ptr<juce::Slider> macroBrightness;
+    std::unique_ptr<juce::Slider> macroPad;
+
+    // SVF filter UI
+    std::unique_ptr<juce::Slider> svfCutoffSlider;
+    std::unique_ptr<juce::Slider> svfResoSlider;
+    std::unique_ptr<juce::ComboBox> svfTypeCombo;
+
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GlobalEditor)

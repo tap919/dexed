@@ -26,6 +26,39 @@
 #include "sin.h"
 #include "fm_op_kernel.h"
 
+static inline int32_t waveformLookup(int32_t phase, uint8_t wf) {
+    switch (wf) {
+        default:
+        case 0: return Sin::lookup(phase);
+        case 1: {
+            // Sawtooth: extract 24-bit phase, center around zero, scale to ±(1<<24)
+            int32_t p = (int32_t)(phase & 0xFFFFFF) - (1 << 23);
+            return p * 2;
+        }
+        case 2:
+            // Square: output +/-(1<<24) based on the MSB of the 24-bit phase
+            return (phase & (1 << 23)) ? -(1 << 24) : (1 << 24);
+        case 3: {
+            // Triangle: linear ramp up then ramp down within each cycle
+            int32_t p = (int32_t)(phase & 0xFFFFFF);
+            if (p < (1 << 23))
+                return p * 4 - (1 << 24);
+            else
+                return (1 << 24) - (p - (1 << 23)) * 4;
+        }
+        case 4: {
+            // Noise: stateless integer hash of the phase accumulator.
+            // Because each operator has a distinct phase and freq, operators stay
+            // decorrelated without any shared mutable state (thread-safe).
+            uint32_t h = (uint32_t)phase;
+            h ^= h >> 16;
+            h *= 0x45d9f3bu;
+            h ^= h >> 16;
+            return (int32_t)h >> 7;  // scale to ~24-bit output range
+        }
+    }
+}
+
 #ifdef HAVE_NEONx
 static bool hasNeon() {
   return true;
@@ -46,7 +79,8 @@ static bool hasNeon() {
 
 void FmOpKernel::compute(int32_t *output, const int32_t *input,
                          int32_t phase0, int32_t freq,
-                         int32_t gain1, int32_t gain2, bool add) {
+                         int32_t gain1, int32_t gain2, bool add,
+                         uint8_t waveform) {
   int32_t dgain = (gain2 - gain1 + (N >> 1)) >> LG_N;
   int32_t gain = gain1;
   int32_t phase = phase0;
@@ -59,7 +93,7 @@ void FmOpKernel::compute(int32_t *output, const int32_t *input,
     if (add) {
       for (int i = 0; i < N; i++) {
         gain += dgain;
-        int32_t y = Sin::lookup(phase + input[i]);
+        int32_t y = waveformLookup(phase + input[i], waveform);
         int32_t y1 = ((int64_t)y * (int64_t)gain) >> 24;
         output[i] += y1;
         phase += freq;
@@ -67,7 +101,7 @@ void FmOpKernel::compute(int32_t *output, const int32_t *input,
     } else {
       for (int i = 0; i < N; i++) {
         gain += dgain;
-        int32_t y = Sin::lookup(phase + input[i]);
+        int32_t y = waveformLookup(phase + input[i], waveform);
         int32_t y1 = ((int64_t)y * (int64_t)gain) >> 24;
         output[i] = y1;
         phase += freq;
@@ -77,7 +111,8 @@ void FmOpKernel::compute(int32_t *output, const int32_t *input,
 }
 
 void FmOpKernel::compute_pure(int32_t *output, int32_t phase0, int32_t freq,
-                              int32_t gain1, int32_t gain2, bool add) {
+                              int32_t gain1, int32_t gain2, bool add,
+                              uint8_t waveform) {
   int32_t dgain = (gain2 - gain1 + (N >> 1)) >> LG_N;
   int32_t gain = gain1;
   int32_t phase = phase0;
@@ -90,7 +125,7 @@ void FmOpKernel::compute_pure(int32_t *output, int32_t phase0, int32_t freq,
     if (add) {
       for (int i = 0; i < N; i++) {
         gain += dgain;
-        int32_t y = Sin::lookup(phase);
+        int32_t y = waveformLookup(phase, waveform);
         int32_t y1 = ((int64_t)y * (int64_t)gain) >> 24;
         output[i] += y1;
         phase += freq;
@@ -98,7 +133,7 @@ void FmOpKernel::compute_pure(int32_t *output, int32_t phase0, int32_t freq,
     } else {
       for (int i = 0; i < N; i++) {
         gain += dgain;
-        int32_t y = Sin::lookup(phase);
+        int32_t y = waveformLookup(phase, waveform);
         int32_t y1 = ((int64_t)y * (int64_t)gain) >> 24;          
         output[i] = y1;
         phase += freq;
@@ -112,7 +147,8 @@ void FmOpKernel::compute_pure(int32_t *output, int32_t phase0, int32_t freq,
 
 void FmOpKernel::compute_fb(int32_t *output, int32_t phase0, int32_t freq,
                             int32_t gain1, int32_t gain2,
-                            int32_t *fb_buf, int fb_shift, bool add) {
+                            int32_t *fb_buf, int fb_shift, bool add,
+                            uint8_t waveform) {
   int32_t dgain = (gain2 - gain1 + (N >> 1)) >> LG_N;
   int32_t gain = gain1;
   int32_t phase = phase0;
@@ -123,7 +159,7 @@ void FmOpKernel::compute_fb(int32_t *output, int32_t phase0, int32_t freq,
       gain += dgain;
       int32_t scaled_fb = (y0 + y) >> (fb_shift + 1);
       y0 = y;
-      y = Sin::lookup(phase + scaled_fb);
+      y = waveformLookup(phase + scaled_fb, waveform);
       y = ((int64_t)y * (int64_t)gain) >> 24;
       output[i] += y;
       phase += freq;
@@ -133,7 +169,7 @@ void FmOpKernel::compute_fb(int32_t *output, int32_t phase0, int32_t freq,
       gain += dgain;
       int32_t scaled_fb = (y0 + y) >> (fb_shift + 1);
       y0 = y;
-      y = Sin::lookup(phase + scaled_fb);
+      y = waveformLookup(phase + scaled_fb, waveform);
       y = ((int64_t)y * (int64_t)gain) >> 24;
       output[i] = y;
       phase += freq;
